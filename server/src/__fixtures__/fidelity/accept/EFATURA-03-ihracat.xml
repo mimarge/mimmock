@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC SAMPLE — NO REAL TAXPAYER DATA. Written from scratch; all
+  identities are deliberately fake, including the customs administration party
+  (named "ÖRNEK GÜMRÜK İDARESİ" so it cannot be mistaken for a real one).
+
+  BRANCH PROVED: EXPORT (IHRACAT / ISTISNA) — the single richest e-Fatura
+  branch, and the one the plain-sale samples structurally cannot reach:
+
+    · export.actualBuyer      — in IHRACAT the AccountingCustomerParty is the
+                                CUSTOMS ADMINISTRATION; the real buyer sits in
+                                cac:BuyerCustomerParty. Without this sample the
+                                second party block is never rendered at all.
+    · lineTable.gtip          — cac:GoodsItem/cbc:RequiredCustomsID
+    · lineTable.packageType / packageNumber / packageCount
+    · lineTable.deliveryPlace — line-level cac:DeliveryAddress
+    · lineTable.despatchMode  — cac:ShipmentStage/cbc:TransportModeCode
+    · lineTable.deliveryTerms — INCOTERMS
+    · exemptionReason         — 0015 VAT is 0, so a written exemption reason is
+                                mandatory (Schematron)
+
+  The foreign buyer's own tax number lives in cac:PartyLegalEntity/cbc:CompanyID;
+  the gate found that leaf MISSING once, so it is present here on purpose.
+-->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>IHRACAT</cbc:ProfileID>
+  <cbc:ID>ORN2026000000003</cbc:ID>
+  <cbc:CopyIndicator>false</cbc:CopyIndicator>
+  <cbc:UUID>00000000-0000-4000-8000-000000000003</cbc:UUID>
+  <cbc:IssueDate>2026-03-10</cbc:IssueDate>
+  <cbc:IssueTime>09:05:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>ISTISNA</cbc:InvoiceTypeCode>
+  <cbc:Note>Sentetik örnek belge — ihracat istisnası.</cbc:Note>
+  <cbc:DocumentCurrencyCode>TRY</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>1</cbc:LineCountNumeric>
+  <cac:Signature>
+    <cbc:ID schemeID="VKN_TCKN">1111111111</cbc:ID>
+    <cac:SignatoryParty>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Mah. Deneme Sok.</cbc:StreetName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+    </cac:SignatoryParty>
+    <cac:DigitalSignatureAttachment>
+      <cac:ExternalReference><cbc:URI>#Signature_ORN2026000000003</cbc:URI></cac:ExternalReference>
+    </cac:DigitalSignatureAttachment>
+  </cac:Signature>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>ÖRNEK YAZILIM TEKNOLOJİLERİ ANONİM ŞİRKETİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Mah. Deneme Sok.</cbc:StreetName>
+        <cbc:BuildingNumber>1</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Çankaya</cbc:CitySubdivisionName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cbc:PostalZone>06000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme><cbc:Name>ÖRNEK VERGİ DAİRESİ</cbc:Name></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <!-- In IHRACAT this party is the customs administration, NOT the real buyer -->
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">4444444444</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>ÖRNEK GÜMRÜK İDARESİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Deneme Gümrük Mah. Örnek Cad.</cbc:StreetName>
+        <cbc:BuildingNumber>4</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Çankaya</cbc:CitySubdivisionName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cbc:PostalZone>06000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme><cbc:Name>ÖRNEK GÜMRÜK VERGİ DAİRESİ</cbc:Name></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <!-- export.actualBuyer — the real foreign buyer -->
+  <cac:BuyerCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="PARTYTYPE">EXPORT</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>ORNEK EXAMPLE TRADING GMBH</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Musterstrasse</cbc:StreetName>
+        <cbc:BuildingNumber>5</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Mitte</cbc:CitySubdivisionName>
+        <cbc:CityName>Berlin</cbc:CityName>
+        <cbc:PostalZone>10000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Almanya</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName>ORNEK EXAMPLE TRADING GMBH</cbc:RegistrationName>
+        <cbc:CompanyID>DE000000001</cbc:CompanyID>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:BuyerCustomerParty>
+  <cac:Delivery>
+    <cbc:ActualDeliveryDate>2026-03-09</cbc:ActualDeliveryDate>
+  </cac:Delivery>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="TRY">0.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="TRY">18000.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="TRY">0.00</cbc:TaxAmount>
+      <cbc:Percent>0</cbc:Percent>
+      <cac:TaxCategory>
+        <cbc:TaxExemptionReasonCode>301</cbc:TaxExemptionReasonCode>
+        <cbc:TaxExemptionReason>Mal ihracatı istisnası kapsamındadır.</cbc:TaxExemptionReason>
+        <cac:TaxScheme>
+          <cbc:Name>KDV</cbc:Name>
+          <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="TRY">18000.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="TRY">18000.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="TRY">18000.00</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="TRY">0.00</cbc:AllowanceTotalAmount>
+    <cbc:PayableAmount currencyID="TRY">18000.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:Note>Kabın markası: ÖRNEK</cbc:Note>
+    <cbc:InvoicedQuantity unitCode="TNE">2</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="TRY">18000.00</cbc:LineExtensionAmount>
+    <cac:Delivery>
+      <!-- lineTable.deliveryPlace -->
+      <cac:DeliveryAddress>
+        <cbc:StreetName>Musterstrasse</cbc:StreetName>
+        <cbc:BuildingNumber>5</cbc:BuildingNumber>
+        <cbc:CityName>Berlin</cbc:CityName>
+        <cbc:PostalZone>10000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Almanya</cbc:Name></cac:Country>
+      </cac:DeliveryAddress>
+      <!-- lineTable.deliveryTerms -->
+      <cac:DeliveryTerms>
+        <cbc:ID schemeID="INCOTERMS">FOB</cbc:ID>
+      </cac:DeliveryTerms>
+      <cac:Shipment>
+        <cbc:ID>1</cbc:ID>
+        <!-- lineTable.gtip -->
+        <cac:GoodsItem>
+          <cbc:RequiredCustomsID>847130000000</cbc:RequiredCustomsID>
+        </cac:GoodsItem>
+        <!-- lineTable.despatchMode: 1 = deniz yolu -->
+        <cac:ShipmentStage>
+          <cbc:TransportModeCode>1</cbc:TransportModeCode>
+        </cac:ShipmentStage>
+        <!-- lineTable.packageNumber / packageCount / packageType -->
+        <cac:TransportHandlingUnit>
+          <cac:ActualPackage>
+            <cbc:ID>ORNEK0000001</cbc:ID>
+            <cbc:Quantity>2</cbc:Quantity>
+            <cbc:PackagingTypeCode>CN</cbc:PackagingTypeCode>
+          </cac:ActualPackage>
+        </cac:TransportHandlingUnit>
+      </cac:Shipment>
+    </cac:Delivery>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="TRY">0.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">18000.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">0.00</cbc:TaxAmount>
+        <cbc:Percent>0</cbc:Percent>
+        <cac:TaxCategory>
+          <cbc:TaxExemptionReasonCode>301</cbc:TaxExemptionReasonCode>
+          <cbc:TaxExemptionReason>Mal ihracatı istisnası kapsamındadır.</cbc:TaxExemptionReason>
+          <cac:TaxScheme>
+            <cbc:Name>KDV</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Name>Örnek makine aksamı</cbc:Name>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="TRY">9000.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

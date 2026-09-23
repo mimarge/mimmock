@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC SAMPLE — NO REAL TAXPAYER DATA. The tourist is an invented person
+  with a placeholder passport number; the intermediary is a fake institution.
+
+  BRANCH PROVED: TRAVELLER GOODS / TAX-FREE (YOLCUBERABERFATURA / ISTISNA).
+  The export sample and this one both fill cac:BuyerCustomerParty, but the model
+  branches on the PROFILE: with YOLCUBERABERFATURA the second party block is
+  rendered as a TOURIST (passport + nationality), not as a foreign company.
+  Only this sample reaches:
+
+    · taxfree.touristName       — cac:BuyerCustomerParty/cac:Party/cac:Person
+    · taxfree.passportNumber    — cac:Person/cac:IdentityDocumentReference/cbc:ID
+    · taxfree.intermediaryTaxId — cac:TaxRepresentativeParty with
+                                  schemeID='ARACIKURUMVKN' (the institution that
+                                  pays the VAT refund back to the tourist)
+
+  cac:Person carries cbc:NationalityID as an ISO 3166-1 alpha-2 CODE on purpose:
+  it proves the country dictionary is reached from the tax-free identity block.
+-->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>YOLCUBERABERFATURA</cbc:ProfileID>
+  <cbc:ID>ORN2026000000004</cbc:ID>
+  <cbc:CopyIndicator>false</cbc:CopyIndicator>
+  <cbc:UUID>00000000-0000-4000-8000-000000000004</cbc:UUID>
+  <cbc:IssueDate>2026-03-12</cbc:IssueDate>
+  <cbc:IssueTime>16:40:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>ISTISNA</cbc:InvoiceTypeCode>
+  <cbc:Note>Sentetik örnek belge — yolcu beraberi eşya istisnası.</cbc:Note>
+  <cbc:DocumentCurrencyCode>TRY</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>1</cbc:LineCountNumeric>
+  <cac:Signature>
+    <cbc:ID schemeID="VKN_TCKN">1111111111</cbc:ID>
+    <cac:SignatoryParty>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Mah. Deneme Sok.</cbc:StreetName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+    </cac:SignatoryParty>
+    <cac:DigitalSignatureAttachment>
+      <cac:ExternalReference><cbc:URI>#Signature_ORN2026000000004</cbc:URI></cac:ExternalReference>
+    </cac:DigitalSignatureAttachment>
+  </cac:Signature>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>ÖRNEK YAZILIM TEKNOLOJİLERİ ANONİM ŞİRKETİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Mah. Deneme Sok.</cbc:StreetName>
+        <cbc:BuildingNumber>1</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Çankaya</cbc:CitySubdivisionName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cbc:PostalZone>06000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme><cbc:Name>ÖRNEK VERGİ DAİRESİ</cbc:Name></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <!-- In YOLCUBERABERFATURA this party is the customs administration -->
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">4444444444</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>ÖRNEK GÜMRÜK İDARESİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Deneme Gümrük Mah. Örnek Cad.</cbc:StreetName>
+        <cbc:BuildingNumber>4</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Çankaya</cbc:CitySubdivisionName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cbc:PostalZone>06000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme><cbc:Name>ÖRNEK GÜMRÜK VERGİ DAİRESİ</cbc:Name></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <!-- taxfree.touristName / taxfree.passportNumber -->
+  <cac:BuyerCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="PARTYTYPE">TOURIST</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:StreetName>Example Street</cbc:StreetName>
+        <cbc:BuildingNumber>7</cbc:BuildingNumber>
+        <cbc:CityName>Amsterdam</cbc:CityName>
+        <cbc:PostalZone>1000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Hollanda</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:Person>
+        <cbc:FirstName>ORNEK</cbc:FirstName>
+        <cbc:FamilyName>TRAVELLER</cbc:FamilyName>
+        <cbc:NationalityID>NL</cbc:NationalityID>
+        <cac:IdentityDocumentReference>
+          <cbc:ID>P0000000</cbc:ID>
+        </cac:IdentityDocumentReference>
+      </cac:Person>
+    </cac:Party>
+  </cac:BuyerCustomerParty>
+  <!-- taxfree.intermediaryTaxId — the VAT-refund intermediary -->
+  <cac:TaxRepresentativeParty>
+    <cac:PartyIdentification>
+      <cbc:ID schemeID="ARACIKURUMVKN">5555555555</cbc:ID>
+    </cac:PartyIdentification>
+    <cac:PartyName>
+      <cbc:Name>DENEME İADE ARACI KURUMU ANONİM ŞİRKETİ</cbc:Name>
+    </cac:PartyName>
+    <cac:PostalAddress>
+      <cbc:StreetName>Numune Mah. Örnek Sok.</cbc:StreetName>
+      <cbc:BuildingNumber>9</cbc:BuildingNumber>
+      <cbc:CityName>İstanbul</cbc:CityName>
+      <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+    </cac:PostalAddress>
+  </cac:TaxRepresentativeParty>
+  <cac:Delivery>
+    <cbc:ActualDeliveryDate>2026-03-12</cbc:ActualDeliveryDate>
+  </cac:Delivery>
+  <cac:PaymentMeans>
+    <cbc:PaymentMeansCode>48</cbc:PaymentMeansCode>
+    <cac:PayeeFinancialAccount>
+      <cbc:ID>TR000000000000000000000004</cbc:ID>
+      <cbc:CurrencyCode>TRY</cbc:CurrencyCode>
+    </cac:PayeeFinancialAccount>
+  </cac:PaymentMeans>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="TRY">0.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="TRY">5000.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="TRY">0.00</cbc:TaxAmount>
+      <cbc:Percent>0</cbc:Percent>
+      <cac:TaxCategory>
+        <cbc:TaxExemptionReasonCode>302</cbc:TaxExemptionReasonCode>
+        <cbc:TaxExemptionReason>Yolcu beraberi eşya istisnası kapsamındadır.</cbc:TaxExemptionReason>
+        <cac:TaxScheme>
+          <cbc:Name>KDV</cbc:Name>
+          <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="TRY">5000.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="TRY">5000.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="TRY">5000.00</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="TRY">0.00</cbc:AllowanceTotalAmount>
+    <cbc:PayableAmount currencyID="TRY">5000.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="C62">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="TRY">5000.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="TRY">0.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">5000.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">0.00</cbc:TaxAmount>
+        <cbc:Percent>0</cbc:Percent>
+        <cac:TaxCategory>
+          <cbc:TaxExemptionReasonCode>302</cbc:TaxExemptionReasonCode>
+          <cbc:TaxExemptionReason>Yolcu beraberi eşya istisnası kapsamındadır.</cbc:TaxExemptionReason>
+          <cac:TaxScheme>
+            <cbc:Name>KDV</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Name>Örnek el dokuması halı</cbc:Name>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="TRY">5000.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

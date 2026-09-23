@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC SAMPLE — NO REAL TAXPAYER DATA (see the e-Fatura twin,
+  samples/EFATURA/06-hks-komisyoncu.xml, for the full note).
+
+  BRANCH PROVED: the e-ARŞİV SIDE of the HKS charge plane — ProfileID=
+  EARSIVFATURA + InvoiceTypeCode=HKSKOMISYONCU. GİB's gate for the charge block
+  is the SAME XPath in both planes (GİB general display transform, lines 1324 and 2138), and there is
+  NO GİB example XML for this one — the twin exists so our own gate is proved on
+  both sides rather than assumed from one.
+-->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+  xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+  xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+  xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"
+  xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+  xmlns:xades="http://uri.etsi.org/01903/v1.3.2#"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2 UBL-Invoice-2.1.xsd">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>EARSIVFATURA</cbc:ProfileID>
+  <cbc:ID>ORN2026000000007</cbc:ID>
+  <cbc:CopyIndicator>false</cbc:CopyIndicator>
+  <cbc:UUID>00000000-0000-4000-8000-000000000007</cbc:UUID>
+  <cbc:IssueDate>2026-03-02</cbc:IssueDate>
+  <cbc:IssueTime>10:15:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>HKSKOMISYONCU</cbc:InvoiceTypeCode>
+  <cbc:Note>YAZIYLA:#İKİ BİN DOKUZ YÜZ DOKSAN DOKUZ TÜRK LIRASI YETMİŞ KURUŞ#</cbc:Note>
+  <cbc:DocumentCurrencyCode>TRY</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>1</cbc:LineCountNumeric>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>ÖRNEK HAL KOMİSYONCULUK ANONİM ŞİRKETİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Toptancı Hal Kompleksi No: 1</cbc:StreetName>
+        <cbc:CitySubdivisionName>ÇANKAYA</cbc:CitySubdivisionName>
+        <cbc:CityName>ANKARA</cbc:CityName>
+        <cbc:PostalZone>06000</cbc:PostalZone>
+        <cac:Country>
+          <cbc:Name>Türkiye</cbc:Name>
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme>
+          <cbc:Name>ÖRNEK VERGİ DAİRESİ</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:Contact>
+        <cbc:Telephone>+90 312 000 00 00</cbc:Telephone>
+        <cbc:ElectronicMail>ornek@ornek.example</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">2222222222</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>DENEME TARIM ÜRÜNLERİ LİMİTED ŞİRKETİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Deneme Caddesi No: 2</cbc:StreetName>
+        <cbc:CitySubdivisionName>KEÇİÖREN</cbc:CitySubdivisionName>
+        <cbc:CityName>ANKARA</cbc:CityName>
+        <cbc:PostalZone>06010</cbc:PostalZone>
+        <cac:Country>
+          <cbc:Name>Türkiye</cbc:Name>
+        </cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme>
+          <cbc:Name>DENEME VERGİ DAİRESİ</cbc:Name>
+        </cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSKOMISYON</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>8.0</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">240.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSKOMISYONKDV</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>1.6</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">48.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSNAVLUN</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>2.0</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">60.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSNAVLUNKDV</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.4</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">12.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSHAMMALIYE</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>1.0</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">30.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSHAMMALIYEKDV</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.2</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">6.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSNAKLIYE</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>1.5</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">45.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSNAKLIYEKDV</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.3</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">9.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSGVTEVKIFAT</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>2.5</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">75.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSBAGKURTEVKIFAT</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>1.25</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">37.50</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSRUSUM</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.15</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">4.50</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSRUSUMKDV</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.03</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">0.90</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSTICBORSASI</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.1</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">3.00</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSTICBORSASIKDV</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.02</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">0.60</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSMILLISAVUNMAFON</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.05</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">1.50</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSMSFONKDV</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.01</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">0.30</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSDIGERMASRAFLAR</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.75</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">22.50</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>HKSDIGERKDV</cbc:AllowanceChargeReason>
+    <cbc:MultiplierFactorNumeric>0.15</cbc:MultiplierFactorNumeric>
+    <cbc:Amount currencyID="TRY">4.50</cbc:Amount>
+  </cac:AllowanceCharge>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="TRY">600.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="TRY">3000.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="TRY">600.00</cbc:TaxAmount>
+      <cbc:Percent>20.00</cbc:Percent>
+            <cac:TaxCategory>
+                <cac:TaxScheme>
+          <cbc:Name>KDV</cbc:Name>
+          <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="TRY">3000.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="TRY">3000.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="TRY">3600.00</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="TRY">0.00</cbc:AllowanceTotalAmount>
+    <cbc:ChargeTotalAmount currencyID="TRY">600.30</cbc:ChargeTotalAmount>
+    <cbc:PayableAmount currencyID="TRY">2999.70</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="KGM">100.00</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="TRY">3000.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="TRY">600.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">3000.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">600.00</cbc:TaxAmount>
+        <cbc:Percent>20.00</cbc:Percent>
+                <cac:TaxCategory>
+                    <cac:TaxScheme>
+            <cbc:Name>KDV</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Name>Domates</cbc:Name>
+      <cac:AdditionalItemIdentification>
+        <cbc:ID schemeID="KUNYENO">1111111111111111111</cbc:ID>
+      </cac:AdditionalItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="TRY">30.00</cbc:PriceAmount>
+    </cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

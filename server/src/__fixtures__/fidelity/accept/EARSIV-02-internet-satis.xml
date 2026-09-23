@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC SAMPLE — NO REAL TAXPAYER DATA. The buyer is an invented private
+  person; the carrier is an invented company.
+
+  BRANCH PROVED: INTERNET SALE to a final consumer (509 §IV.2.4.5). This is the
+  conditional branch the corpus never contained, and it is the reason the e-Arşiv
+  gate could only ever verify a fraction of the model: the whole
+  "İNTERNET SATIŞ BİLGİLERİ" block plus the mandatory RETURN SECTION are printed
+  only when the document carries INT_* references. All six are present here:
+
+    INT_WEBSITE · INT_PAYMENT_METHOD · INT_PAYMENTDATE
+    INT_TRANSPORTER · INT_TRANSPORTER_REGISTER_NUMBER · INT_TRANSPORT_DATE
+
+  (Their spec xpaths carry a predicate, so the field counter cannot resolve them
+  mechanically and reports them as unchecked — but the RENDER item still proves
+  the block compiles and prints, which no other sample can do.)
+
+  Secondary branch: a natural-person buyer with a TCKN and NO tax office — the
+  ordinary shape of a final-consumer e-Arşiv invoice.
+-->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>EARSIVFATURA</cbc:ProfileID>
+  <cbc:ID>ORA2026000000002</cbc:ID>
+  <cbc:CopyIndicator>false</cbc:CopyIndicator>
+  <cbc:UUID>00000000-0000-4000-8000-000000000012</cbc:UUID>
+  <cbc:IssueDate>2026-04-06</cbc:IssueDate>
+  <cbc:IssueTime>19:45:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>SATIS</cbc:InvoiceTypeCode>
+  <cbc:Note>Sentetik örnek belge — internet üzerinden satış.</cbc:Note>
+  <cbc:DocumentCurrencyCode>TRY</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>1</cbc:LineCountNumeric>
+  <!-- The six INT_* references that switch the internet-sales block on -->
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>https://magaza.ornek.example.test</cbc:ID>
+    <cbc:IssueDate>2026-04-06</cbc:IssueDate>
+    <cbc:DocumentTypeCode>INT_WEBSITE</cbc:DocumentTypeCode>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>KREDIKARTI/BANKAKARTI</cbc:ID>
+    <cbc:IssueDate>2026-04-06</cbc:IssueDate>
+    <cbc:DocumentTypeCode>INT_PAYMENT_METHOD</cbc:DocumentTypeCode>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>2026-04-06</cbc:ID>
+    <cbc:IssueDate>2026-04-06</cbc:IssueDate>
+    <cbc:DocumentTypeCode>INT_PAYMENTDATE</cbc:DocumentTypeCode>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>DENEME KARGO ANONİM ŞİRKETİ</cbc:ID>
+    <cbc:IssueDate>2026-04-07</cbc:IssueDate>
+    <cbc:DocumentTypeCode>INT_TRANSPORTER</cbc:DocumentTypeCode>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>6666666666</cbc:ID>
+    <cbc:IssueDate>2026-04-07</cbc:IssueDate>
+    <cbc:DocumentTypeCode>INT_TRANSPORTER_REGISTER_NUMBER</cbc:DocumentTypeCode>
+  </cac:AdditionalDocumentReference>
+  <cac:AdditionalDocumentReference>
+    <cbc:ID>2026-04-07</cbc:ID>
+    <cbc:IssueDate>2026-04-07</cbc:IssueDate>
+    <cbc:DocumentTypeCode>INT_TRANSPORT_DATE</cbc:DocumentTypeCode>
+  </cac:AdditionalDocumentReference>
+  <cac:Signature>
+    <cbc:ID schemeID="VKN_TCKN">1111111111</cbc:ID>
+    <cac:SignatoryParty>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Mah. Deneme Sok.</cbc:StreetName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+    </cac:SignatoryParty>
+    <cac:DigitalSignatureAttachment>
+      <cac:ExternalReference><cbc:URI>#Signature_ORA2026000000002</cbc:URI></cac:ExternalReference>
+    </cac:DigitalSignatureAttachment>
+  </cac:Signature>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cbc:WebsiteURI>https://magaza.ornek.example.test</cbc:WebsiteURI>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>ÖRNEK YAZILIM TEKNOLOJİLERİ ANONİM ŞİRKETİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Mah. Deneme Sok.</cbc:StreetName>
+        <cbc:BuildingNumber>1</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Çankaya</cbc:CitySubdivisionName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cbc:PostalZone>06000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme><cbc:Name>ÖRNEK VERGİ DAİRESİ</cbc:Name></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="TCKN">33333333333</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:StreetName>Numune Mah. Test Cad.</cbc:StreetName>
+        <cbc:BuildingNumber>2</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Kadıköy</cbc:CitySubdivisionName>
+        <cbc:CityName>İstanbul</cbc:CityName>
+        <cbc:PostalZone>34000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:Person>
+        <cbc:FirstName>ÖRNEK</cbc:FirstName>
+        <cbc:FamilyName>MÜŞTERİ</cbc:FamilyName>
+      </cac:Person>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:Delivery>
+    <cbc:ActualDeliveryDate>2026-04-07</cbc:ActualDeliveryDate>
+  </cac:Delivery>
+  <cac:PaymentMeans>
+    <cbc:PaymentMeansCode>48</cbc:PaymentMeansCode>
+    <cbc:PaymentDueDate>2026-04-06</cbc:PaymentDueDate>
+  </cac:PaymentMeans>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="TRY">900.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+      <cbc:Percent>20</cbc:Percent>
+      <cac:TaxCategory>
+        <cac:TaxScheme>
+          <cbc:Name>KDV</cbc:Name>
+          <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="TRY">900.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="TRY">900.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="TRY">1080.00</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="TRY">0.00</cbc:AllowanceTotalAmount>
+    <cbc:PayableAmount currencyID="TRY">1080.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="C62">1</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="TRY">900.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">900.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+        <cbc:Percent>20</cbc:Percent>
+        <cac:TaxCategory>
+          <cac:TaxScheme>
+            <cbc:Name>KDV</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Name>Örnek kablosuz kulaklık</cbc:Name>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="TRY">900.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

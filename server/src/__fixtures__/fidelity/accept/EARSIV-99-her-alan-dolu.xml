@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SYNTHETIC SAMPLE — NO REAL TAXPAYER DATA. Written from scratch; all
+  identities are deliberately fake.
+
+  BRANCH PROVED: the plain e-Arşiv sale to a REGISTERED BUYER (EARSIVFATURA /
+  SATIS). This is the branch where every party field is filled — trade name,
+  VKN, tax office and address on BOTH sides — so it is the sample that carries
+  the full party model. It also fills the two references the e-Arşiv model prints
+  above the line table (deliveryDate and despatchNoteReference) and gives each
+  line an explicit tax-scheme NAME, which is what `lineTable.taxType` reads.
+-->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
+  <cbc:ProfileID>EARSIVFATURA</cbc:ProfileID>
+  <cbc:ID>ORA2026000000001</cbc:ID>
+  <cbc:CopyIndicator>false</cbc:CopyIndicator>
+  <cbc:UUID>00000000-0000-4000-8000-000000000011</cbc:UUID>
+  <cbc:IssueDate>2026-04-02</cbc:IssueDate>
+  <cbc:IssueTime>09:20:00</cbc:IssueTime>
+  <cbc:InvoiceTypeCode>SATIS</cbc:InvoiceTypeCode>
+  <cbc:Note>Sentetik örnek belge — gerçek mükellef verisi içermez.</cbc:Note>
+  <cbc:Note>Fatura bedeline itiraz süresi tebliğ tarihinden itibaren sekiz gündür.</cbc:Note>
+  <cbc:Note>Sevkiyat sırasında oluşabilecek hasarlardan taşıyıcı firma sorumludur.</cbc:Note>
+  <cbc:DocumentCurrencyCode>TRY</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>2</cbc:LineCountNumeric>
+  <cac:DespatchDocumentReference>
+    <cbc:ID>ORNIRS2026000000011</cbc:ID>
+    <cbc:IssueDate>2026-04-01</cbc:IssueDate>
+  </cac:DespatchDocumentReference>
+  <cac:Signature>
+    <cbc:ID schemeID="VKN_TCKN">1111111111</cbc:ID>
+    <cac:SignatoryParty>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Mah. Deneme Sok.</cbc:StreetName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+    </cac:SignatoryParty>
+    <cac:DigitalSignatureAttachment>
+      <cac:ExternalReference><cbc:URI>#Signature_ORA2026000000001</cbc:URI></cac:ExternalReference>
+    </cac:DigitalSignatureAttachment>
+  </cac:Signature>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cbc:WebsiteURI>https://ornek.example.test</cbc:WebsiteURI>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">1111111111</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>ÖRNEK YAZILIM TEKNOLOJİLERİ ANONİM ŞİRKETİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Örnek Mah. Deneme Sok.</cbc:StreetName>
+        <cbc:BuildingNumber>1</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Çankaya</cbc:CitySubdivisionName>
+        <cbc:CityName>Ankara</cbc:CityName>
+        <cbc:PostalZone>06000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme><cbc:Name>ÖRNEK VERGİ DAİRESİ</cbc:Name></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:Contact>
+        <cbc:Telephone>(312) 000 00 01</cbc:Telephone>
+        <cbc:ElectronicMail>ornek@ornek.example.test</cbc:ElectronicMail>
+      </cac:Contact>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="VKN">2222222222</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyName>
+        <cbc:Name>DENEME TİCARET LİMİTED ŞİRKETİ</cbc:Name>
+      </cac:PartyName>
+      <cac:PostalAddress>
+        <cbc:StreetName>Numune Mah. Test Cad.</cbc:StreetName>
+        <cbc:BuildingNumber>2</cbc:BuildingNumber>
+        <cbc:CitySubdivisionName>Kadıköy</cbc:CitySubdivisionName>
+        <cbc:CityName>İstanbul</cbc:CityName>
+        <cbc:PostalZone>34000</cbc:PostalZone>
+        <cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country>
+      </cac:PostalAddress>
+      <cac:PartyTaxScheme>
+        <cac:TaxScheme><cbc:Name>DENEME VERGİ DAİRESİ</cbc:Name></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:Delivery>
+    <cbc:ActualDeliveryDate>2026-04-01</cbc:ActualDeliveryDate>
+  </cac:Delivery>
+  <cac:PaymentMeans>
+    <cbc:PaymentMeansCode>42</cbc:PaymentMeansCode>
+    <cac:PayeeFinancialAccount>
+      <cbc:ID>TR000000000000000000000011</cbc:ID>
+      <cbc:CurrencyCode>TRY</cbc:CurrencyCode>
+    </cac:PayeeFinancialAccount>
+  </cac:PaymentMeans>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="TRY">300.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="TRY">1500.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="TRY">300.00</cbc:TaxAmount>
+      <cbc:Percent>20</cbc:Percent>
+      <cac:TaxCategory>
+        <cac:TaxScheme>
+          <cbc:Name>KDV</cbc:Name>
+          <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="TRY">1500.00</cbc:LineExtensionAmount>
+    <cbc:TaxExclusiveAmount currencyID="TRY">1500.00</cbc:TaxExclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="TRY">1800.00</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="TRY">0.00</cbc:AllowanceTotalAmount>
+    <cbc:PayableAmount currencyID="TRY">1800.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="C62">3</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="TRY">900.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">900.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">180.00</cbc:TaxAmount>
+        <cbc:Percent>20</cbc:Percent>
+        <cac:TaxCategory>
+          <cac:TaxScheme>
+            <cbc:Name>KDV</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">900.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">225.00</cbc:TaxAmount>
+        <cbc:Percent>25</cbc:Percent>
+        <cac:TaxCategory><cac:TaxScheme>
+          <cbc:Name>ÖTV</cbc:Name><cbc:TaxTypeCode>0071</cbc:TaxTypeCode>
+        </cac:TaxScheme></cac:TaxCategory>
+      </cac:TaxSubtotal>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">900.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">45.00</cbc:TaxAmount>
+        <cbc:Percent>5</cbc:Percent>
+        <cac:TaxCategory><cac:TaxScheme>
+          <cbc:Name>ÖİV</cbc:Name><cbc:TaxTypeCode>4080</cbc:TaxTypeCode>
+        </cac:TaxScheme></cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:AllowanceCharge>
+      <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+      <cbc:AllowanceChargeReason>Yıl sonu toplu alım anlaşması</cbc:AllowanceChargeReason>
+      <cbc:MultiplierFactorNumeric>0.10</cbc:MultiplierFactorNumeric>
+      <cbc:Amount currencyID="TRY">100.00</cbc:Amount>
+    </cac:AllowanceCharge>
+    <cac:Item>
+      <cbc:Name>Örnek ofis sandalyesi</cbc:Name>
+      <cbc:Description>Üç yıl yerinde garanti · kurulum dahil · seri no aralığı 4412–4415</cbc:Description>
+      <cac:BuyersItemIdentification><cbc:ID>ALC-99812</cbc:ID></cac:BuyersItemIdentification>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="TRY">300.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+  <cac:InvoiceLine>
+    <cbc:ID>2</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="MTR">20</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="TRY">600.00</cbc:LineExtensionAmount>
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="TRY">120.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">600.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">120.00</cbc:TaxAmount>
+        <cbc:Percent>20</cbc:Percent>
+        <cac:TaxCategory>
+          <cac:TaxScheme>
+            <cbc:Name>KDV</cbc:Name>
+            <cbc:TaxTypeCode>0015</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">900.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">225.00</cbc:TaxAmount>
+        <cbc:Percent>25</cbc:Percent>
+        <cac:TaxCategory><cac:TaxScheme>
+          <cbc:Name>ÖTV</cbc:Name><cbc:TaxTypeCode>0071</cbc:TaxTypeCode>
+        </cac:TaxScheme></cac:TaxCategory>
+      </cac:TaxSubtotal>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="TRY">900.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="TRY">45.00</cbc:TaxAmount>
+        <cbc:Percent>5</cbc:Percent>
+        <cac:TaxCategory><cac:TaxScheme>
+          <cbc:Name>ÖİV</cbc:Name><cbc:TaxTypeCode>4080</cbc:TaxTypeCode>
+        </cac:TaxScheme></cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:AllowanceCharge>
+      <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+      <cbc:AllowanceChargeReason>Yıl sonu toplu alım anlaşması</cbc:AllowanceChargeReason>
+      <cbc:MultiplierFactorNumeric>0.10</cbc:MultiplierFactorNumeric>
+      <cbc:Amount currencyID="TRY">100.00</cbc:Amount>
+    </cac:AllowanceCharge>
+    <cac:Item>
+      <cbc:Name>Deneme kablo kanalı</cbc:Name>
+      <cbc:Description>Üç yıl yerinde garanti · kurulum dahil · seri no aralığı 4412–4415</cbc:Description>
+      <cac:BuyersItemIdentification><cbc:ID>ALC-99812</cbc:ID></cac:BuyersItemIdentification>
+    </cac:Item>
+    <cac:Price><cbc:PriceAmount currencyID="TRY">30.00</cbc:PriceAmount></cac:Price>
+  </cac:InvoiceLine>
+</Invoice>
