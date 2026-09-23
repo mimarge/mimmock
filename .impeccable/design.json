@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T00:00:00Z",
+  "title": "Design System: MimMock Paneli",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Mürekkep",
+        "canonical": "#08090b",
+        "note": "Sayfa zemini ve theme-color. OWN-WORLD #0a0b0d demişti; inşa #08090b ile bitti — inşa kazanır.",
+        "tonalRamp": ["#08090b", "#0d0f12", "#15181d", "#20242b", "#2a2f37", "#525c6b", "#9a9ca2", "#ece9e2"]
+      },
+      "board": {
+        "role": "neutral",
+        "displayName": "Tahta Gövdesi",
+        "canonical": "#0d0f12",
+        "tonalRamp": ["#08090b", "#0d0f12", "#12161d", "#191d23", "#20242b", "#2a2f37", "#7b818b", "#c9ccd2"]
+      },
+      "flap": {
+        "role": "neutral",
+        "displayName": "Kanatçık",
+        "canonical": "#15181d",
+        "tonalRamp": ["#0a0c0f", "#101318", "#15181d", "#1b1f26", "#1e232b", "#232830", "#3a4049", "#9a9ca2"]
+      },
+      "flap-hi": {
+        "role": "neutral",
+        "displayName": "Kanatçık Vurgusu (menteşe saç teli)",
+        "canonical": "#20242b",
+        "tonalRamp": ["#0a0c0f", "#14171c", "#1b1f25", "#20242b", "#262b33", "#2a2f37", "#3a4049", "#525c6b"]
+      },
+      "hinge": {
+        "role": "neutral",
+        "displayName": "Menteşe Siyahı",
+        "canonical": "#000000",
+        "tonalRamp": ["#000000", "#050607", "#08090b", "#0b0d10", "#0d0f12", "#14171c", "#1b1f25", "#2a2f37"]
+      },
+      "edge": {
+        "role": "neutral",
+        "displayName": "Kenar",
+        "canonical": "#2a2f37",
+        "tonalRamp": ["#0d0f12", "#14171c", "#1b1f25", "#22262e", "#2a2f37", "#3a4049", "#525c6b", "#7b818b"]
+      },
+      "edge-soft": {
+        "role": "neutral",
+        "displayName": "Yumuşak Kenar",
+        "canonical": "#1b1f25",
+        "tonalRamp": ["#0b0c0f", "#0e1014", "#14171c", "#1b1f25", "#22262e", "#2a2f37", "#3a4049", "#525c6b"]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Sıcak Kireç Beyazı",
+        "canonical": "#ece9e2",
+        "note": "Ölçülen kontrast ~15.5:1 (mürekkep zemin üzerinde).",
+        "tonalRamp": ["#2b2a27", "#454340", "#5f5d58", "#7b7872", "#97948d", "#b5b2aa", "#d3d0c9", "#ece9e2"]
+      },
+      "dim": {
+        "role": "neutral",
+        "displayName": "Sönük",
+        "canonical": "#9a9ca2",
+        "note": "Ölçülen kontrast ~7.3:1.",
+        "tonalRamp": ["#1c1d20", "#2e3034", "#444649", "#5c5f64", "#75787e", "#8b8e94", "#9a9ca2", "#c4c6ca"]
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Soluk (kontrast tabanı)",
+        "canonical": "#7b818b",
+        "note": "Ölçülen kontrast ~4.6:1 — WCAG AA tabanı. Daha sönük dördüncü kademe yok.",
+        "tonalRamp": ["#16181b", "#25282c", "#373b41", "#4b5058", "#61666f", "#7b818b", "#9aa0a9", "#c3c8cf"]
+      },
+      "yellow": {
+        "role": "primary",
+        "displayName": "Tahta Sarısı",
+        "canonical": "#f5b820",
+        "note": "OWN-WORLD #f0b429 demişti; inşa #f5b820 ile bitti — inşa kazanır. Üzerine daima saf siyah metin.",
+        "tonalRamp": ["#2a1e02", "#453105", "#61460a", "#7f5c0e", "#a07614", "#c2911a", "#f5b820", "#fbd980"]
+      },
+      "green": {
+        "role": "secondary",
+        "displayName": "Tahta Yeşili",
+        "canonical": "#3fc47f",
+        "tonalRamp": ["#0a2417", "#0f3a25", "#155034", "#1c6844", "#248256", "#2e9d68", "#3fc47f", "#8adcb2"]
+      },
+      "amber": {
+        "role": "secondary",
+        "displayName": "Kehribar",
+        "canonical": "#f0a02c",
+        "tonalRamp": ["#2b1a04", "#452b07", "#613e0b", "#7f5310", "#a06916", "#c2801d", "#f0a02c", "#f8ca88"]
+      },
+      "red": {
+        "role": "secondary",
+        "displayName": "Tahta Kırmızısı",
+        "canonical": "#f4676c",
+        "tonalRamp": ["#2d0d0f", "#471518", "#631f23", "#81292e", "#a1353a", "#c34448", "#f4676c", "#f9a9ac"]
+      },
+      "slate": {
+        "role": "tertiary",
+        "displayName": "Arşiv Mavisi",
+        "canonical": "#9aa6c2",
+        "note": "Kapanmış/raporlanmış kayıtlar, senaryo künyesi, zincir düğmesi.",
+        "tonalRamp": ["#171b24", "#252c3a", "#353e52", "#47526b", "#5b6885", "#7181a0", "#9aa6c2", "#c7cfe0"]
+      }
+    },
+    "typographyMeta": {
+      "wordmark": { "displayName": "Künye", "purpose": "Raydaki MIMMOCK künyesi. Tek örnek." },
+      "clock-face": { "displayName": "Saat Yüzü", "purpose": "Gerçek ve sanal saat; saniye hanesi 15px ikincil kademede." },
+      "board-title": { "displayName": "Tahta Başlığı", "purpose": "GİDEN / GELEN tahta adları." },
+      "board-row": { "displayName": "Tahta Satırı", "purpose": "Kanatçık satırının kendisi, 36px sabit yükseklikte." },
+      "board-status": { "displayName": "Durum", "purpose": "Durum hücresi; daima çizilmiş işaretiyle birlikte." },
+      "column-head": { "displayName": "Sütun Bandı", "purpose": "Sarı sütun başlıkları ve tahtanın dilindeki düğmeler." },
+      "label": { "displayName": "Etiket", "purpose": "Künye etiketleri, form alan adları, legend, defter başlıkları." },
+      "body": { "displayName": "Gövde", "purpose": "Sayfanın taban metni; tabular-nums açık." },
+      "note": { "displayName": "Not", "purpose": "Açıklama katmanı, sözlük gövdesi, eksen düğümü notu." },
+      "data": { "displayName": "Ölçülen Sayı", "purpose": "Belge no, VKN, ham GİB kodu, saat, ETTN, tutar, kural kimliği." },
+      "data-small": { "displayName": "Ölçülen Sayı (küçük)", "purpose": "Plaka satırı, zaman ekseni ölçeği, kaynak künyesi." }
+    },
+    "shadows": [
+      { "name": "flap", "value": "inset 0 1px 0 var(--flap-hi), inset 0 -8px 10px -10px #000", "purpose": "Her tahta satırı: üstte menteşe saç teli, altta mat gölge. İkisi birden olmadan satır kanatçık değildir." },
+      { "name": "board-chassis", "value": "inset 0 0 0 1px #1a1e25, 0 3px 0 rgba(0, 0, 0, .75)", "purpose": "Kanatçık modüllerini tutan metal kasa. YALNIZ tahta gövdesine uygulanır; genel bir yükseltme değildir." },
+      { "name": "rail", "value": "inset 0 1px 0 #262b33, 0 2px 0 rgba(0, 0, 0, .6)", "purpose": "Üst metal rayın ve çekmece başlığının kalınlığı." },
+      { "name": "expand-mouth", "value": "inset 0 8px 14px -10px #000", "purpose": "Satır açılımının ağzına düşen gölge; kanatçığın kalktığını söyler." },
+      { "name": "row-open-rail", "value": "inset 0 1px 0 var(--flap-hi), inset 3px 0 0 var(--yellow)", "purpose": "Açık satırın ilk hücresindeki sarı sol çıta." },
+      { "name": "axis-node", "value": "0 0 0 3px #0b0d11", "purpose": "Zaman ekseni düğümünün zemin halkası; 1220 düğümünde dışına 0 0 0 4px var(--green) eklenir." },
+      { "name": "clock-shift", "value": "inset 0 -2px 0 var(--amber)", "purpose": "Sanal saatin kaymış olduğunu söyleyen kehribar taban çizgisi. Parıltı yerine malzeme." },
+      { "name": "drawer", "value": "-18px 0 40px rgba(0, 0, 0, .6)", "purpose": "Sayfanın TEK yayılan gölgesi; yalnız sağdan giren çekmecede." }
+    ],
+    "motion": [
+      { "name": "ease-board", "value": "cubic-bezier(.2, .8, .2, 1)", "purpose": "Sayfadaki tek yumuşatma eğrisi: çevirme, satır açılımı ve çekmece." },
+      { "name": "flip-duration", "value": "250ms", "purpose": "Split-flap kanatçık dönüşü: rotateX(-86deg) → 10deg → 0." },
+      { "name": "flip-stagger", "value": "26ms", "purpose": "Karakter başına soldan sağa kademe; en fazla 10 karakter kademelenir (kaynakta 26ms; yön sözleşmesi 28ms demişti)." },
+      { "name": "expand-duration", "value": "220ms", "purpose": "SATIR AÇILIMI: grid-template-rows 0fr → 1fr." },
+      { "name": "drawer-duration", "value": "240ms", "purpose": "Çekmecenin transform + visibility geçişi." },
+      { "name": "reduced-motion-mark", "value": "600ms step-end", "purpose": "prefers-reduced-motion altında çevirmenin yerini alan tek karelik sarı vurgu. Hareket gider, değişim haberi kalır." }
+    ],
+    "breakpoints": [
+      { "name": "wide", "value": "1100px", "purpose": "Servis bandı ve ham istek/yanıt çifti tek sütuna iner." },
+      { "name": "narrow", "value": "760px", "purpose": "Ray sarılır, --gut 10px olur, tahtalar yatay kayar, ikincil kimlik sütunları tahtadan çekilir." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Tahta Satırı (Board Row)",
+      "kind": "custom",
+      "refersTo": "board-row",
+      "description": "Sabit 36px kanatçık satırı: üstte menteşe, altta mat gölge, ilk hücrede menteşe oku. Satırın kendisi birincil eylemdir.",
+      "html": "<table class=\"ds-board\"><thead><tr><th>BELGE NO</th><th>DURUM</th><th>HAM</th></tr></thead><tbody><tr class=\"ds-row\"><td class=\"ds-mono\"><button class=\"ds-hinge-btn\"><svg class=\"ds-hinge\" width=\"10\" height=\"10\" viewBox=\"0 0 10 10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M1.6 3.4 5 6.8 8.4 3.4\"/></svg>MIM2026000000418</button></td><td><span class=\"ds-status ds-t-ok\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M1.8 6.4 4.5 9.2 10.2 2.9\"/></svg>TESLİM</span></td><td class=\"ds-mono ds-dim\">1220</td></tr><tr class=\"ds-row open\"><td class=\"ds-mono\"><button class=\"ds-hinge-btn\"><svg class=\"ds-hinge\" width=\"10\" height=\"10\" viewBox=\"0 0 10 10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M1.6 6.6 5 3.2 8.4 6.6\"/></svg>MIM2026000000419</button></td><td><span class=\"ds-status ds-t-held\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M4.2 2.4v7.2\"/><path d=\"M7.8 2.4v7.2\"/></svg>ASKIDA</span></td><td class=\"ds-mono ds-dim\">1200</td></tr></tbody></table>",
+      "css": ".ds-board { width: 100%; border-collapse: collapse; background: var(--board, #0d0f12); table-layout: fixed; border: 1px solid #000; box-shadow: inset 0 0 0 1px #1a1e25, 0 3px 0 rgba(0,0,0,.75); } .ds-board thead th { font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--yellow, #f5b820); text-align: left; padding: 7px 10px; background: #12161d; border-bottom: 2px solid var(--yellow, #f5b820); white-space: nowrap; } .ds-board thead th + th, .ds-board tbody td + td { border-left: 1px solid rgba(0,0,0,.55); } .ds-board tbody .ds-row > td { padding: 0 10px; height: 36px; border-top: 1px solid #000; box-shadow: inset 0 1px 0 var(--flap-hi, #20242b), inset 0 -8px 10px -10px #000; background: var(--flap, #15181d); color: var(--text, #ece9e2); font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 16px; letter-spacing: .03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-board tbody .ds-row { cursor: pointer; } .ds-board tbody .ds-row:hover > td { background: #1b1f26; } .ds-board tbody .ds-row.open > td { background: #1e232b; } .ds-board tbody .ds-row.open > td:first-child { box-shadow: inset 0 1px 0 var(--flap-hi, #20242b), inset 3px 0 0 var(--yellow, #f5b820); } .ds-board .ds-mono { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace) !important; font-size: 13px !important; font-variant-numeric: tabular-nums; } .ds-dim { color: var(--dim, #9a9ca2); } .ds-hinge-btn { display: inline-flex; align-items: center; gap: 7px; font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; text-align: left; } .ds-hinge-btn:focus-visible { outline: 2px solid var(--yellow, #f5b820); outline-offset: 3px; } .ds-hinge { color: var(--faint, #7b818b); vertical-align: -1px; } .ds-row.open .ds-hinge { color: var(--yellow, #f5b820); } .ds-status { display: inline-flex; align-items: center; gap: 7px; font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 15px; letter-spacing: .08em; } .ds-t-ok { color: var(--green, #3fc47f); } .ds-t-held { color: var(--amber, #f0a02c); } .ds-t-fail { color: var(--red, #f4676c); } .ds-t-transit { color: #cfd3da; }"
+    },
+    {
+      "name": "Flip (split-flap hücresi)",
+      "kind": "custom",
+      "refersTo": "board-row",
+      "description": "Sayfanın tek hareket grameri. Yalnız değişen karakter döner, soldan sağa 26ms kademeyle; ilk boyamada çevirme yoktur.",
+      "html": "<span class=\"ds-flip\"><span class=\"ds-sr-only\">TESLİM</span><span class=\"ds-flap turn\" style=\"animation-delay:0ms\" aria-hidden=\"true\">T</span><span class=\"ds-flap turn\" style=\"animation-delay:26ms\" aria-hidden=\"true\">E</span><span class=\"ds-flap turn\" style=\"animation-delay:52ms\" aria-hidden=\"true\">S</span><span class=\"ds-flap turn\" style=\"animation-delay:78ms\" aria-hidden=\"true\">L</span><span class=\"ds-flap turn\" style=\"animation-delay:104ms\" aria-hidden=\"true\">İ</span><span class=\"ds-flap turn\" style=\"animation-delay:130ms\" aria-hidden=\"true\">M</span></span>",
+      "css": ".ds-flip { display: inline-block; perspective: 220px; font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 16px; letter-spacing: .03em; color: var(--text, #ece9e2); } .ds-flap { display: inline-block; transform-origin: 50% 0; backface-visibility: hidden; } .ds-flap.turn { position: relative; animation: ds-flap 250ms cubic-bezier(.2,.8,.2,1) both; } .ds-flap.turn::before { content: ''; position: absolute; inset: -1px -0.5px; background: var(--flap-hi, #20242b); border-bottom: 1px solid #0a0c0f; z-index: -1; animation: ds-card 250ms step-end both; } @keyframes ds-card { 0%, 99% { opacity: 1; } 100% { opacity: 0; } } @keyframes ds-flap { 0% { transform: rotateX(-86deg); opacity: .35; } 58% { transform: rotateX(10deg); opacity: 1; } 100% { transform: rotateX(0); opacity: 1; } } .ds-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } @media (prefers-reduced-motion: reduce) { .ds-flap.turn { animation: ds-mark 600ms step-end both; } .ds-flap.turn::before { animation: none; opacity: 0; } @keyframes ds-mark { 0% { background: rgba(245,184,32,.35); } 100% { background: none; } } }"
+    },
+    {
+      "name": "SATIR AÇILIMI — zaman ekseni",
+      "kind": "custom",
+      "refersTo": "detail-expand",
+      "description": "Satırın altına inen tek dikey zaman ekseni. Solda mono saat, eksende çizilmiş düğüm, sağda kural kimliği ve ham GİB kodu.",
+      "html": "<div class=\"ds-detail\"><ol class=\"ds-axis\"><li class=\"ds-node\"><span class=\"ds-node-time\">14:02:11</span><span class=\"ds-node-dot\"></span><span class=\"ds-node-body\"><span class=\"ds-node-head\"><span class=\"ds-rule\">R-SEND-02</span><span class=\"ds-move\">GÖNDERİLDİ<svg class=\"ds-arrow\" width=\"14\" height=\"8\" viewBox=\"0 0 14 8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M0 4h11\"/><path d=\"M8.4 1.2 11.6 4 8.4 6.8\"/></svg><b>GİB'DE</b></span></span><span class=\"ds-node-src\">ham kod 1200</span></span></li><li class=\"ds-node key\"><span class=\"ds-node-time\">14:06:40</span><span class=\"ds-node-dot\"></span><span class=\"ds-node-body\"><span class=\"ds-node-head\"><span class=\"ds-rule\">R-DLV-01</span><span class=\"ds-anchor-word\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M6 2.2v7.6\"/><path d=\"M3.4 4.4h5.2\"/><path d=\"M2.2 7.4a3.8 3.8 0 0 0 7.6 0\"/></svg>BİRİNCİL</span></span><span class=\"ds-node-src\">ham kod 1220</span></span></li></ol></div>",
+      "css": ".ds-detail { padding: 16px 14px 20px 30px; background: #0b0d11; border-left: 3px solid var(--yellow, #f5b820); box-shadow: inset 0 8px 14px -10px #000; } .ds-axis { position: relative; list-style: none; margin: 0; padding: 0; } .ds-axis::before { content: ''; position: absolute; left: 89px; top: 7px; bottom: 7px; width: 1px; background: #525c6b; } .ds-node { display: grid; grid-template-columns: 78px 22px 1fr; align-items: start; padding: 5px 0; } .ds-node-time { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-size: 11.5px; color: var(--dim, #9a9ca2); padding-top: 1px; font-variant-numeric: tabular-nums; } .ds-node-dot { width: 7px; height: 7px; background: var(--dim, #9a9ca2); margin: 5px 0 0 8px; box-shadow: 0 0 0 3px #0b0d11; } .ds-node.key .ds-node-dot { background: var(--green, #3fc47f); box-shadow: 0 0 0 3px #0b0d11, 0 0 0 4px var(--green, #3fc47f); } .ds-node-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .ds-node-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .ds-rule { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-weight: 500; font-size: 11.5px; color: var(--yellow, #f5b820); border: 1px solid #3a2f10; padding: 0 5px; } .ds-move { font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 500; font-size: 13.5px; letter-spacing: .04em; color: var(--dim, #9a9ca2); } .ds-move b { color: var(--text, #ece9e2); font-weight: 600; } .ds-arrow { color: var(--faint, #7b818b); margin: 0 2px; } .ds-anchor-word { display: inline-flex; align-items: center; gap: 5px; font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 11px; letter-spacing: .12em; color: var(--green, #3fc47f); } .ds-node-src { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-size: 11px; color: var(--faint, #7b818b); }"
+    },
+    {
+      "name": "Birincil Düğme",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Sarı zemin, siyah metin, çerçevesiz. Sayfada aynı anda tek bir birincil eylem olur.",
+      "html": "<button class=\"ds-btn-primary\">BELGEYİ GÖNDER</button> <button class=\"ds-btn-primary\" disabled>BELGEYİ GÖNDER</button>",
+      "css": ".ds-btn-primary { font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; background: var(--yellow, #f5b820); color: #000; border: none; border-radius: 0; padding: 9px 18px; cursor: pointer; } .ds-btn-primary:hover { background: #ffc734; } .ds-btn-primary:focus-visible { outline: 2px solid var(--yellow, #f5b820); outline-offset: 2px; } .ds-btn-primary:active { background: #dda517; } .ds-btn-primary:disabled { background: var(--edge, #2a2f37); color: var(--dim, #9a9ca2); cursor: default; }"
+    },
+    {
+      "name": "Tahta Düğmesi (flap)",
+      "kind": "button",
+      "refersTo": "button-flap",
+      "description": "Tahtanın kendi dilindeki ikincil kumanda: kanatçık zemini, üst kenarı kanatçık ışığıyla aydınlatılmış. .on hâli sarıya döner.",
+      "html": "<button class=\"ds-btn-flap\">İLERLET</button> <button class=\"ds-btn-flap on\">1230</button> <button class=\"ds-btn-quiet\">GİZLE</button>",
+      "css": ".ds-btn-flap { font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--text, #ece9e2); background: var(--flap, #15181d); border: 1px solid var(--edge, #2a2f37); border-top-color: var(--flap-hi, #20242b); border-radius: 0; padding: 6px 11px; cursor: pointer; } .ds-btn-flap:hover { background: #1c2027; border-color: #3a4049; } .ds-btn-flap:focus-visible { outline: 2px solid var(--yellow, #f5b820); outline-offset: 2px; } .ds-btn-flap.on { background: var(--yellow, #f5b820); color: #000; border-color: var(--yellow, #f5b820); } .ds-btn-quiet { background: none; border: 1px solid var(--edge, #2a2f37); color: var(--dim, #9a9ca2); font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-size: 11px; letter-spacing: .1em; border-radius: 0; padding: 2px 8px; cursor: pointer; } .ds-btn-quiet:hover { color: var(--text, #ece9e2); border-color: #3a4049; } .ds-btn-quiet:focus-visible { outline: 2px solid var(--yellow, #f5b820); outline-offset: 2px; }"
+    },
+    {
+      "name": "Alan (Field)",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Versal etiket üstte, mono girdi altta. Odakta çerçeve sarıya döner; çerçevenin kendisi odak işaretidir.",
+      "html": "<label class=\"ds-field\"><span>ALICI VKN</span><input type=\"text\" value=\"1234567890\" placeholder=\"10 hane\" /></label>",
+      "css": ".ds-field { display: inline-flex; flex-direction: column; gap: 3px; } .ds-field > span { font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint, #7b818b); } .ds-field input { background: #101318; border: 1px solid var(--edge, #2a2f37); border-radius: 0; color: var(--text, #ece9e2); font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-size: 13px; padding: 7px 8px; caret-color: var(--yellow, #f5b820); font-variant-numeric: tabular-nums; } .ds-field input:hover { border-color: #3a4049; } .ds-field input:focus { border-color: var(--yellow, #f5b820); outline: none; } .ds-field input::placeholder { color: var(--faint, #7b818b); } .ds-field input::selection { background: var(--yellow, #f5b820); color: #000; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Profil seçimi. Gerçek input görsel olarak gizlenir; etiket taşıyıcıdır. Seçili hâl sarı zemin.",
+      "html": "<div class=\"ds-chips\"><label class=\"ds-chip on\"><input type=\"checkbox\" checked />TICARIFATURA</label><label class=\"ds-chip\"><input type=\"checkbox\" />TEMELFATURA</label><label class=\"ds-chip\"><input type=\"checkbox\" />IHRACAT</label></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: 6px; } .ds-chip { display: inline-flex; align-items: center; cursor: pointer; font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-size: 11.5px; border: 1px solid var(--edge, #2a2f37); border-radius: 0; padding: 4px 8px; color: var(--dim, #9a9ca2); position: relative; } .ds-chip:hover { border-color: #3a4049; color: var(--text, #ece9e2); } .ds-chip input { position: absolute; opacity: 0; width: 0; height: 0; } .ds-chip.on { background: var(--yellow, #f5b820); color: #000; border-color: var(--yellow, #f5b820); } .ds-chip:has(input:focus-visible) { outline: 2px solid var(--yellow, #f5b820); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ray (üst metal şerit)",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Gezinme yok; yerini ray alır. Solda künye + plaka satırı, ortada iki saat, sağda bağlantı lambası. Lamba sözcüğünü de yazar.",
+      "html": "<header class=\"ds-rail\"><div class=\"ds-brand\"><span class=\"ds-wordmark\">MIMMOCK</span><span class=\"ds-plateline\">memory · gib-v1</span></div><div class=\"ds-clock\"><span class=\"ds-clock-tag\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" stroke-linecap=\"square\" aria-hidden=\"true\"><circle cx=\"7\" cy=\"7\" r=\"5.3\"/><path d=\"M7 3.6V7l2.4 1.7\"/></svg>GERÇEK</span><span class=\"ds-clock-face\">14:06<span class=\"ds-secs\">:40</span></span></div><div class=\"ds-clock virt shifted\"><span class=\"ds-clock-tag\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" stroke-linecap=\"square\" aria-hidden=\"true\"><path d=\"M12.3 7A5.3 5.3 0 1 1 7 1.7\"/><path d=\"M7 3.6V7l2.4 1.7\"/><path d=\"M8.4 1.7h3.9v3.9\"/></svg>SANAL</span><span class=\"ds-clock-face\">18:18<span class=\"ds-secs\">:52</span></span><span class=\"ds-clock-off\"><span class=\"ds-shift\">+16g 04:12</span></span></div><span class=\"ds-lamp on\"><span class=\"ds-bulb\"></span>MİMKİT BAĞLI</span></header>",
+      "css": ".ds-rail { display: flex; align-items: center; gap: 24px; padding: 10px 16px; background: linear-gradient(180deg, #14171c 0%, #0b0d10 100%); border-bottom: 1px solid #000; box-shadow: inset 0 1px 0 #262b33, 0 2px 0 rgba(0,0,0,.6); flex-wrap: wrap; } .ds-brand { display: flex; flex-direction: column; gap: 1px; min-width: 190px; } .ds-wordmark { font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 22px; letter-spacing: .2em; line-height: 1; color: var(--text, #ece9e2); } .ds-plateline { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-size: 11px; color: var(--faint, #7b818b); letter-spacing: .02em; } .ds-clock { display: flex; flex-direction: column; gap: 1px; } .ds-clock-tag { display: flex; align-items: center; gap: 5px; font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 11px; letter-spacing: .16em; color: var(--dim, #9a9ca2); } .ds-clock-face { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-size: 26px; font-weight: 500; line-height: 1.05; letter-spacing: .01em; color: var(--text, #ece9e2); font-variant-numeric: tabular-nums; } .ds-secs { font-size: 15px; margin-left: 1px; } .ds-clock.virt .ds-clock-face { color: var(--yellow, #f5b820); } .ds-clock.virt .ds-secs { color: #9c8f6a; } .ds-clock.virt.shifted .ds-clock-face { box-shadow: inset 0 -2px 0 var(--amber, #f0a02c); } .ds-clock-off { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-size: 11px; color: #b8b096; } .ds-shift { color: var(--amber, #f0a02c); font-weight: 500; } .ds-lamp { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 500; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim, #9a9ca2); } .ds-lamp.on { color: var(--text, #ece9e2); } .ds-bulb { width: 7px; height: 7px; background: var(--red, #f4676c); outline: 1px solid #5a2326; outline-offset: 2px; } .ds-lamp.on .ds-bulb { background: var(--green, #3fc47f); outline-color: #1f5236; }"
+    },
+    {
+      "name": "Defter Satırı (servis bandı)",
+      "kind": "card",
+      "refersTo": "ledger-row",
+      "description": "Tahta değil, tahtanın arkası: daha sessiz malzeme, 26px sıkı satır, soluk başlıklar. Durum sözcükle ve renkle gelir.",
+      "html": "<section class=\"ds-strip\"><div class=\"ds-strip-head\"><h3>WEBHOOK TESLİMLERİ</h3><span class=\"ds-dim\">14 kayıt</span></div><table class=\"ds-ledger\"><thead><tr><th>#</th><th>OLAY</th><th>DURUM</th><th>DEN.</th></tr></thead><tbody><tr class=\"ds-lrow\"><td class=\"ds-lmono\">7</td><td class=\"ds-lmono\">invoice.delivered</td><td><span class=\"ds-pill delivered\">delivered</span></td><td class=\"ds-lmono\">1/5</td></tr><tr class=\"ds-lrow\"><td class=\"ds-lmono\">8</td><td class=\"ds-lmono\">invoice.failed</td><td><span class=\"ds-pill dead\">dead</span></td><td class=\"ds-lmono\">5/5</td></tr></tbody></table></section>",
+      "css": ".ds-strip { background: #0b0c0f; border: 1px solid var(--edge-soft, #1b1f25); } .ds-strip-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 8px 11px; border-bottom: 1px solid var(--edge-soft, #1b1f25); background: #0e1014; } .ds-strip-head h3 { margin: 0; font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 12px; letter-spacing: .2em; color: var(--dim, #9a9ca2); } .ds-ledger { width: 100%; border-collapse: collapse; table-layout: fixed; } .ds-ledger thead th { font-family: var(--board-font, 'Barlow Condensed', system-ui, sans-serif); font-weight: 600; font-size: 11px; letter-spacing: .14em; color: var(--faint, #7b818b); text-align: left; padding: 5px 9px; border-bottom: 1px solid var(--edge-soft, #1b1f25); white-space: nowrap; } .ds-ledger tbody td { padding: 4px 9px; font-family: var(--note-font, 'Barlow', system-ui, sans-serif); font-size: 12.5px; height: 26px; color: var(--text, #ece9e2); border-bottom: 1px solid #14171c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-ledger tbody .ds-lrow { cursor: pointer; } .ds-ledger tbody .ds-lrow:hover > td { background: #14171c; } .ds-lmono { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace) !important; font-size: 12px !important; font-variant-numeric: tabular-nums; } .ds-pill { font-family: var(--data-font, 'IBM Plex Mono', ui-monospace, monospace); font-size: 12px; } .ds-pill.delivered { color: var(--green, #3fc47f); } .ds-pill.dead { color: var(--red, #f4676c); } .ds-pill.pending, .ds-pill.retrying { color: var(--amber, #f0a02c); }"
+    },
+    {
+      "name": "Term (açıklama çıpası)",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Yoğunluk varsayılan, açıklama talep üzerine: katman kapalıyken HİÇBİR iz bırakmaz. Açıkken noktalı alt çizgi, seçiliyken düz sarı.",
+      "html": "<p class=\"ds-term-line\">Belge <button class=\"ds-term\">ETTN</button> ile adreslenir; <button class=\"ds-term on\">1220</button> teslim anıdır.</p>",
+      "css": ".ds-term-line { font-family: var(--note-font, 'Barlow', system-ui, sans-serif); font-size: 13px; color: var(--dim, #9a9ca2); margin: 0; } .ds-term { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: help; text-decoration: underline dotted var(--dim, #9a9ca2); text-underline-offset: 3px; } .ds-term:hover { text-decoration-color: var(--yellow, #f5b820); } .ds-term:focus-visible { outline: 2px solid var(--yellow, #f5b820); outline-offset: 2px; } .ds-term.on { text-decoration: underline solid var(--yellow, #f5b820); color: var(--yellow, #f5b820); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Uçuş Bilgi Tahtası",
+    "overview": "Bu sistem bir gösterge paneli değil, bir durum tahtasıdır. Havaalanı salonundaki Solari split-flap tahtası gibi davranır: mürekkep siyahı bir gövde, bir ton açık kanatçık satırları, her satırın üstünde saç teli kalınlığında bir menteşe çizgisi ve altında mat bir gölge. Bilgi kartlara bölünmez, kahraman metriğe indirgenmez; tek bir ortak zaman ekseninde dizilmiş, sabit yükseklikli satırlar hâlinde okunur. Reddedilen kategori düzeni açıkça kayıtlıdır: eşit boyutlu kart ızgarası ve kahraman sayı.\n\nYoğunluk bu sistemin varsayılanıdır. Panel ikinci ekranda sürekli açık durur; göz ucuyla okunur, üstüne eğilinmez. Satır yüksekliği 36px'te sabitlenmiştir, sütunlar piksel genişliğinde çivilidir, sayı sütunları tabular-nums ile hizalanır. Açıklama katmanı yoğunluğa müdahale etmez: talep üzerine gelir ve kapalıyken sayfada hiçbir iz bırakmaz.\n\nMalzeme süs değildir. Tahtanın kasası (kenar + alt kalınlık + iç vurgu) ve kanatçığın kendi yüzü (üst menteşe + alt mat gölge) bu dünyanın taşıyıcı kararlarıdır; onları kaldırdığınızda geriye koyu bir HTML tablosu kalır. Aynı şekilde hareket de tek bir gramerdir: çevirme, ve yalnız değişimde.",
+    "keyCharacteristics": [
+      "Mürekkep siyahı zeminde tahta sarısı sütun bandı; sıcak kireç beyazı metin.",
+      "Üç yüz, üç iş: tahta (Barlow Condensed), ölçülen sayı (IBM Plex Mono), açıklama (Barlow).",
+      "Sıfır yuvarlaklık: her köşe dik, her kenar 1px hattır.",
+      "Tek hareket grameri: split-flap çevirme, yalnız bir değer değiştiğinde.",
+      "Renk hiçbir bilginin tek taşıyıcısı değil — işaret + sözcük + renk birlikte.",
+      "Yoğunluk varsayılan, açıklama talep üzerine."
+    ],
+    "rules": [
+      { "name": "The Never-Color-Alone Rule", "body": "Renk hiçbir durumun tek taşıyıcısı değildir. Tahtadaki her durum üç katmanla gelir: çizilmiş işaret + sözcük + renk. 1220 teslimi ayrıca çıpa işareti ve BİRİNCİL sözcüğünü taşır. Yeni bir durum eklerken üçünü birden getirin; ikisi yetmez.", "section": "colors" },
+      { "name": "The Measured-Dim Rule", "body": "Üç sönük kademe tarayıcıda ölçülmüş kontrastla seçildi: --text ~15.5:1, --dim ~7.3:1, --faint ~4.6:1 — hepsi WCAG AA (4.5:1) üstünde. --faint tabanın kendisidir; daha sönük bir dördüncü kademe icat etmeyin.", "section": "colors" },
+      { "name": "The Yellow-Is-The-Board Rule", "body": "Sarı tahtanın sütun bandıdır, genel bir vurgu boyası değil. Sütun başlığı, odak, seçim, sanal zaman ve tek bir birincil eylem dışında sarı kullanılmaz.", "section": "colors" },
+      { "name": "The Three-Faces Rule", "body": "Üç yüz, üç iş. Tahta satırı ve versal etiketler --board-font; ölçülen her sayı (belge no, ham GİB kodu, saat, ETTN, tutar, dizi numarası) --data-font; açıklama katmanı --note-font. Bir sayı Barlow'la dizildiyse yanlıştır.", "section": "typography" },
+      { "name": "The Wide-Tracking-Only-For-Caps Rule", "body": "0.1em üstü harf aralığı YALNIZ kısa versal etikette meşrudur. Karışık büyük-küçük metinde geniş aralık okumayı bozar; gövde metni 0.03em ve altında kalır.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "font-variant-numeric: tabular-nums gövdede açıktır ve kapatılmaz. Bir tahtada sayılar sütun hâlinde hizalanır, akışkan genişlikte değil.", "section": "typography" },
+      { "name": "The Board-Scrolls-Not-Wraps Rule", "body": "Dar ekranda tahta yatay kayar; hücre sarmalanmaz, satır yüksekliği değişmez. Sütun hizası tahtanın özüdür.", "section": "layout" },
+      { "name": "The Reading-Stays-Put Rule", "body": "Tahta kayarken SATIR AÇILIMI kaymaz: açılım hücresi position: sticky; left: 0 ile sol kenara yapışır ve künye ekran genişliğine oturur. Kayan şey veri sütunudur, okuma metni değil.", "section": "layout" },
+      { "name": "The Material-Not-Air Rule", "body": "Derinlik kenarla ve kanatçık gölgesiyle anlatılır. Renkli halo, parıltı (glow) ve yumuşak yükseltme yoktur: sanal saatteki sapma bile parıltıyla değil kehribar bir taban çizgisiyle (inset 0 -2px 0) söylenir.", "section": "elevation" },
+      { "name": "The Drawn-Marks-Only Rule", "body": "Her işaret elle çizilmiş SVG'dir. Unicode glifi, emoji, ikon fontu ve <img> işareti kullanılmaz: durum taşıyan bir işaretin yazı tipine göre başka görünmesi kabul edilemez.", "section": "shapes" },
+      { "name": "The Zero-Radius Rule", "body": "border-radius sıfırdır ve istisnası yoktur.", "section": "shapes" },
+      { "name": "The Flip-Means-Change Rule", "body": "Sayfanın tek hareket grameri çevirmedir ve yalnız bir değer değiştiğinde çalışır. İlk boyamada çevirme yoktur (25 satırın birden dönmesi kuralı aşındırırdı). Başka hiçbir yerde döndürme, kayma veya yükselme animasyonu yoktur.", "section": "components" },
+      { "name": "The Reduced-Motion-Keeps-The-News Rule", "body": "prefers-reduced-motion: reduce altında çevirme tek karelik sarı bir vurguya (600ms step-end) iner, açılım anlık yüksekliğe, çekmece anlık konuma geçer. Hareket kaybolur, değişim haberi kalmalıdır — animasyonu tamamen kaldırmak yanlıştır.", "section": "components" },
+      { "name": "The Density-First Rule", "body": "Yoğunluk varsayılandır, açıklama talep üzerine gelir. Öğretici bir katman uzman kullanıcıyı asla yavaşlatmaz; kapalıyken sayfada yer, çizgi ya da ikon işgal etmez.", "section": "components" }
+    ],
+    "dos": [
+      "Do her ölçülen sayıyı --data-font ile diz: belge no, VKN, ham GİB kodu, saat, ETTN, tutar, dizi numarası.",
+      "Do her yeni durumu üç katmanla getir: çizilmiş 12×12 işaret + sözcük + renk.",
+      "Do yeni işaretleri ortak dilde çiz: 12×12 kutu, 1.6 kalınlık, kesik uç, dik açı, currentColor.",
+      "Do derinliği kenar ve kanatçık gölgesiyle anlat (inset 0 1px 0 var(--flap-hi) üstte, inset 0 -8px 10px -10px #000 altta).",
+      "Do sarı zemin üzerine daima saf siyah (#000) metin yaz.",
+      "Do yeni yüzey eklerken tarayıcı yüzeylerini de temala: ::selection, scrollbar, caret, :focus-visible, color-scheme, theme-color.",
+      "Do dar ekranda tahtayı yatay kaydır ve ikincil kimlik sütunlarını satır açılımının künyesine bırak.",
+      "Do yeni metin renklerini ölçülmüş kontrastla seç; taban --faint (~4.6:1)."
+    ],
+    "donts": [
+      "Don't border-radius kullanma; bu dünyada yuvarlak köşe yok.",
+      "Don't Unicode glifi, emoji ya da ikon fontu ile durum işareti yapma.",
+      "Don't çevirme animasyonunu değişim dışında bir şey için kullanma — ilk boyamada, hover'da ya da sayfa girişinde çevirme yok.",
+      "Don't renkli halo, parıltı ya da yumuşak yükseltme ile durum anlatma; sapma bile kehribar bir taban çizgisiyle söylenir.",
+      "Don't 0.1em üstü harf aralığını karışık büyük-küçük metinde kullanma; geniş aralık yalnız kısa versal etikettedir.",
+      "Don't yüzleri Google Fonts'tan ya da sistemden çağırma; latin-ext dahil self-host şart (ğ ş İ).",
+      "Don't tabular-nums'ı kapatma ve sayı sütunlarını orantılı rakamla dizme.",
+      "Don't açıklama/öğretici katmanını varsayılan açık bırakma ya da kapalıyken iz bırakan bir işaret koyma.",
+      "Don't eşit boyutlu kart ızgarası ya da kahraman metrik ekleme; bu yüzeyin reddettiği kategori düzeni budur."
+    ]
+  }
+}

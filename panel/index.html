@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <!-- Tarayıcı çerçevesi de tahtanın rengini alır; açık gri bir çubuk dünyayı böler. -->
+    <meta name="theme-color" content="#08090b" />
+    <meta
+      name="description"
+      content="MimMock sandbox tahtası — MimForge'un bugünkü davranışının yerel simülatörü."
+    />
+    <!-- Tahtanın iki taşıyıcı yüzü ilk boyamadan önce gelsin: sistem yüzüne düşüş görünmesin. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="/fonts/barlow-condensed-600-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+      href="/fonts/plex-mono-400-latin.woff2" />
+    <!--
+      Makineler için: API sözleşmesi ve LLM kılavuzu. Bir ajan yalnız bu sayfayı
+      çekerse (JavaScript çalıştırmadan) bile nereye bakacağını bulur.
+    -->
+    <link rel="service-desc" type="application/json" href="/openapi.json" />
+    <link rel="service-doc" type="text/html" href="/docs" />
+    <link rel="alternate" type="text/markdown" title="LLM kılavuzu" href="/llms-full.txt" />
+    <title>MimMock — sandbox tahtası</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <p>
+        MimMock paneli JavaScript ister. Bir LLM ya da kodlama ajanıysanız:
+        <a href="/llms.txt">/llms.txt</a> (dizin) ·
+        <a href="/llms-full.txt">/llms-full.txt</a> (tam kılavuz) ·
+        <a href="/openapi.json">/openapi.json</a> (OpenAPI 3.1) ·
+        <a href="/docs">/docs</a> (API referansı).
+      </p>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

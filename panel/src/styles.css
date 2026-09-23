@@ -1,0 +1,851 @@
+/*
+ * MimMock paneli — UÇUŞ BİLGİ TAHTASI.
+ *
+ * Malzeme: Solari split-flap tahtası. Mürekkep siyahı gövde, bir ton açık
+ * kanatçık, her satırın üstünde saç teli menteşe, altında mat gölge. Sıcak
+ * kireç beyazı metin, tahta sarısı sütun bandı.
+ *
+ * İki kural sayfanın her yerinde geçerlidir:
+ *   1. Çevirme YALNIZ değişimi anlatır. Başka hiçbir hareket yok.
+ *   2. Renk hiçbir durumun TEK taşıyıcısı değildir — işaret ve sözcük hep orada.
+ */
+
+/* ── Yüzler: kendi kopyamızdan sunulur, sistem yüzüne düşülmez ───────────── */
+/* Türkçe için latin-ext ŞART: ğ ş İ latin alt kümesinde yok. */
+@font-face { font-family: 'Board'; font-weight: 500; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-condensed-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Board'; font-weight: 500; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-condensed-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Board'; font-weight: 600; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-condensed-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Board'; font-weight: 600; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-condensed-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF; }
+
+@font-face { font-family: 'Note'; font-weight: 400; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Note'; font-weight: 400; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Note'; font-weight: 500; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Note'; font-weight: 500; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Note'; font-weight: 600; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Note'; font-weight: 600; font-style: normal; font-display: swap;
+  src: url('/fonts/barlow-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF; }
+
+@font-face { font-family: 'Data'; font-weight: 400; font-style: normal; font-display: swap;
+  src: url('/fonts/plex-mono-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Data'; font-weight: 400; font-style: normal; font-display: swap;
+  src: url('/fonts/plex-mono-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Data'; font-weight: 500; font-style: normal; font-display: swap;
+  src: url('/fonts/plex-mono-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Data'; font-weight: 500; font-style: normal; font-display: swap;
+  src: url('/fonts/plex-mono-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF; }
+
+/* ── Simgeler ────────────────────────────────────────────────────────────── */
+:root {
+  --ink: #08090b;
+  --board: #0d0f12;
+  --flap: #15181d;
+  --flap-hi: #20242b;
+  --hinge: #000;
+  --edge: #2a2f37;
+  --edge-soft: #1b1f25;
+
+  /*
+   * Üç kademe de WCAG AA'nın (4.5:1) ÜSTÜNDE — tarayıcıda ölçüldü.
+   * Önceki `--faint: #5c6066` ray künyesinde 3.15, defter başlığında 3.09
+   * veriyordu: tahtanın en küçük ama işlevsel metinleri okunmuyordu.
+   */
+  --text: #ece9e2;   /* ~15.5:1 */
+  --dim: #9a9ca2;    /* ~7.3:1  */
+  --faint: #7b818b;  /* ~4.6:1  */
+
+  --yellow: #f5b820;
+  --green: #3fc47f;
+  --amber: #f0a02c;
+  --red: #f4676c;
+
+  --board-font: 'Board', 'Barlow Condensed', system-ui, sans-serif;
+  --note-font: 'Note', 'Barlow', system-ui, sans-serif;
+  --data-font: 'Data', 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* İkinci ekranda sürekli açık duran bir tahta masaüstü tablosu ölçeğinde olamaz. */
+  --row-h: 36px;
+  --gut: 16px;
+
+  color-scheme: dark;
+  accent-color: var(--yellow);
+}
+
+/* ── Sıfırlama ve tarayıcı yüzeyleri ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { background: var(--ink); }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--note-font);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  scrollbar-color: var(--edge) var(--board);
+  scrollbar-width: thin;
+}
+
+::selection { background: var(--yellow); color: #000; text-shadow: none; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--board); }
+::-webkit-scrollbar-thumb { background: var(--edge); border: 2px solid var(--board); }
+::-webkit-scrollbar-thumb:hover { background: #3a4049; }
+
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+
+input, textarea { caret-color: var(--yellow); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
+.mono, code, pre { font-family: var(--data-font); font-variant-numeric: tabular-nums; }
+.dim { color: var(--dim); }
+.sel { user-select: all; }
+.clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 0; }
+
+/* ── Çevirme: sayfanın tek hareket grameri ───────────────────────────────── */
+.flip { display: inline-block; perspective: 220px; }
+
+.flap { display: inline-block; transform-origin: 50% 0; backface-visibility: hidden; }
+
+/*
+ * Yalnız değişen kanatçık döner — ve dönerken KENDİ YÜZÜ vardır: kart gövdesi
+ * ile ortasındaki yatay dikiş. Çıplak glifi çevirmek split-flap değildir.
+ */
+.flap.turn { animation: flap 250ms cubic-bezier(.2, .8, .2, 1) both; }
+.flap.turn { position: relative; }
+.flap.turn::before {
+  content: ''; position: absolute; inset: -1px -0.5px;
+  background: var(--flap-hi);
+  border-bottom: 1px solid #0a0c0f;
+  z-index: -1;
+  animation: card 250ms step-end both;
+}
+@keyframes card { 0%, 99% { opacity: 1; } 100% { opacity: 0; } }
+
+@keyframes flap {
+  0%   { transform: rotateX(-86deg); opacity: .35; }
+  58%  { transform: rotateX(10deg);  opacity: 1; }
+  100% { transform: rotateX(0);      opacity: 1; }
+}
+
+/* ── Kabuk ───────────────────────────────────────────────────────────────── */
+.fids { min-height: 100dvh; display: flex; flex-direction: column; }
+
+main { flex: 1; padding: 0 var(--gut) 40px; display: flex; flex-direction: column; gap: 26px; }
+
+/* ── RAY ─────────────────────────────────────────────────────────────────── */
+.rail {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px var(--gut);
+  background: linear-gradient(180deg, #14171c 0%, #0b0d10 100%);
+  border-bottom: 1px solid var(--hinge);
+  box-shadow: inset 0 1px 0 #262b33, 0 2px 0 rgba(0, 0, 0, .6);
+  position: sticky; top: 0; z-index: 30;
+  flex-wrap: wrap;
+}
+
+.brand { display: flex; flex-direction: column; gap: 1px; min-width: 190px; }
+
+.wordmark {
+  font-family: var(--board-font);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: .2em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.plateline { font-family: var(--data-font); font-size: 11px; color: var(--faint); letter-spacing: .02em; }
+
+.clocks { display: flex; gap: 22px; align-items: flex-start; }
+
+.clock { display: flex; flex-direction: column; gap: 1px; }
+
+.clock-tag {
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .16em; color: var(--dim);
+}
+
+.clock-face { font-size: 26px; font-weight: 500; line-height: 1.05; letter-spacing: .01em; }
+/*
+ * Saniye ikincil hanedir. Uçuş tahtalarında saniye yoktur ve sürekli çevrilen
+ * bir hane "çevirme = haber" kuralını aşındırırdı; ama sandbox'ta `+30sn`
+ * atlayan bir geliştiricinin saniyeyi görmesi gerekir. İkisi de doğru olsun.
+ */
+.secs { font-size: 15px; margin-left: 1px; }
+.clock.virt .secs { color: #9c8f6a; }
+
+.clock.virt .clock-face { color: var(--yellow); }
+/*
+ * Sapma parıltıyla değil MALZEMEYLE anlatılır: kehribar bir taban çizgisi.
+ * Sıfır kaymalı renkli halo bu dünyanın ışığı değil.
+ */
+.clock.virt.shifted .clock-face { box-shadow: inset 0 -2px 0 var(--amber); }
+
+.clock-off { font-size: 11px; color: var(--dim); }
+.clock.virt .clock-off { color: #b8b096; }
+.clock.virt.shifted .clock-off { color: var(--amber); }
+.clock-off .shift { color: var(--amber); font-weight: 500; }
+
+.rail-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.lamp {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--board-font); font-weight: 500; font-size: 11.5px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
+  padding-right: 6px;
+}
+.lamp .bulb { width: 7px; height: 7px; background: var(--red); outline: 1px solid #5a2326; outline-offset: 2px; }
+.lamp.on .bulb { background: var(--green); outline-color: #1f5236; }
+.lamp.on { color: var(--text); }
+
+.rail-btn {
+  font-family: var(--board-font); font-weight: 600; font-size: 11.5px;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text); background: var(--flap);
+  border: 1px solid var(--edge); border-top-color: var(--flap-hi);
+  padding: 6px 11px; cursor: pointer;
+}
+.rail-btn:hover { background: #1c2027; border-color: #3a4049; }
+a.rail-btn { text-decoration: none; display: inline-flex; align-items: center; }
+.rail-btn.on { background: var(--yellow); color: #000; border-color: var(--yellow); }
+.rail-btn.live { color: var(--green); }
+.rail-btn .dim { font-family: var(--data-font); letter-spacing: 0; text-transform: none; }
+
+/* ── ZAMAN ŞERİDİ: sayfanın tek kesintisiz çizgisi ───────────────────────── */
+.timeline {
+  position: relative;
+  padding: 12px 52px 8px;
+  background: var(--board);
+  border-bottom: 1px solid var(--hinge);
+}
+
+.tl-jumps, .tl-line, .tl-scale { position: relative; }
+
+.tl-jumps { height: 24px; }
+
+.jump {
+  position: absolute; top: 0; transform: translateX(-50%);
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--text); background: var(--flap);
+  border: 1px solid var(--edge); border-bottom: none;
+  padding: 3px 8px 4px; cursor: pointer; white-space: nowrap;
+}
+.jump:hover { background: var(--yellow); color: #000; border-color: var(--yellow); }
+/* Sağ uçtaki düğme kenardan taşmasın. */
+.jump:last-of-type { transform: translateX(-100%); }
+.jump:last-of-type::after { left: auto; right: 0; }
+/* Sıfırlama sol uçta, "şimdi" işaretinin üstünde. */
+.jump.reset { left: 0; transform: none; color: var(--amber); }
+.jump.reset::after { left: 0; background: var(--amber); }
+.jump::after {
+  content: ''; position: absolute; left: 50%; bottom: -7px;
+  width: 1px; height: 7px; background: var(--edge);
+}
+.jump:hover::after { background: var(--yellow); }
+
+.tl-line { height: 2px; background: var(--edge-soft); }
+
+.tl-nowmark {
+  position: absolute; left: 0; top: -4px; width: 2px; height: 10px; background: var(--yellow);
+}
+
+.tl-ev {
+  position: absolute; top: -3px; width: 1px; height: 8px;
+  background: var(--amber); transform: translateX(-50%);
+}
+.tl-ev.on { background: var(--yellow); height: 12px; top: -5px; width: 2px; }
+
+.tl-scale { height: 18px; margin-top: 4px; font-family: var(--data-font); font-size: 11px; color: var(--faint); }
+
+.tl-now { position: absolute; left: 0; color: var(--yellow); letter-spacing: .1em; }
+.tl-tick { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.tl-tick:last-of-type { transform: translateX(-100%); }
+
+
+
+/* ── Sözlük şeridi ───────────────────────────────────────────────────────── */
+.gloss {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 10px var(--gut);
+  background: #131a12;
+  border-bottom: 1px solid var(--hinge);
+  box-shadow: inset 0 1px 0 #1f2a1d;
+}
+
+.gloss-term {
+  font-family: var(--board-font); font-weight: 600; font-size: 14px;
+  letter-spacing: .1em; color: var(--yellow); white-space: nowrap; padding-top: 1px;
+}
+
+.gloss-body { display: flex; flex-direction: column; gap: 3px; max-width: 105ch; }
+.gloss-long { color: var(--dim); font-size: 13px; }
+.gloss-src { font-family: var(--data-font); font-size: 11px; color: var(--faint); }
+.gloss-hint { color: var(--dim); font-size: 13px; }
+
+.gloss-close {
+  margin-left: auto; background: none; border: 1px solid var(--edge);
+  color: var(--dim); font-family: var(--board-font); font-size: 11px;
+  letter-spacing: .1em; padding: 2px 8px; cursor: pointer;
+}
+
+/* Terim çıpası — katman kapalıyken hiç iz yok. */
+.term {
+  font: inherit; color: inherit; background: none; border: none; padding: 0;
+  cursor: help; text-decoration: underline dotted var(--dim); text-underline-offset: 3px;
+}
+.term:hover { text-decoration-color: var(--yellow); }
+.term.on { text-decoration: underline solid var(--yellow); color: var(--yellow); }
+
+/* ── Uyarılar ve hata ────────────────────────────────────────────────────── */
+.notice {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 7px var(--gut);
+  background: #16110a;
+  border-top: 2px solid var(--amber);
+  border-bottom: 1px solid var(--hinge);
+}
+.notice-mark { width: 7px; height: 7px; background: var(--amber); flex: none; }
+
+.notice-item {
+  font-family: var(--board-font); font-weight: 600; font-size: 12px;
+  letter-spacing: .1em; color: var(--amber);
+  background: none; border: none; padding: 0; cursor: pointer;
+  text-decoration: underline dotted rgba(240, 160, 44, .55); text-underline-offset: 4px;
+}
+.notice-item:hover { text-decoration-color: var(--amber); }
+.notice-hint { font-size: 12px; color: var(--dim); }
+
+.notice-hide, .warn-show {
+  background: none; border: 1px solid var(--edge); color: var(--dim);
+  font-family: var(--board-font); font-size: 11px; letter-spacing: .1em;
+  padding: 2px 8px; cursor: pointer;
+}
+.notice-hide { margin-left: auto; }
+.warn-show { align-self: flex-start; margin: 6px 0 0 var(--gut); }
+
+.err {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 10px var(--gut) 0; padding: 9px 12px;
+  background: #1d0f11; border-top: 2px solid var(--red); color: #f3dcdd; font-size: 13px;
+}
+.err-code { font-family: var(--data-font); font-size: 12px; color: var(--red); }
+.err ul { margin: 4px 0 0; padding-left: 18px; width: 100%; }
+
+/* ── TAHTA ───────────────────────────────────────────────────────────────── */
+.board-wrap { margin-top: 22px; }
+
+.board-head { display: flex; align-items: baseline; gap: 14px; padding: 0 0 8px; }
+
+.board-head h2 {
+  margin: 0;
+  font-family: var(--board-font); font-weight: 600; font-size: 19px;
+  letter-spacing: .26em; color: var(--text);
+}
+
+.count {
+  font-family: var(--data-font); font-size: 11.5px; color: var(--dim);
+  letter-spacing: .02em;
+}
+
+/*
+ * Tahtanın kasası. Kasasız hâlde tahtalar sayfa zeminine doğrudan oturuyordu ve
+ * "tahta" bir NESNE değil bir alan olarak okunuyordu. Kenar + alt kalınlık +
+ * iç kenar vurgusu: kanatçık modüllerini tutan metal çerçeve.
+ */
+.board {
+  width: 100%; border-collapse: collapse; background: var(--board); table-layout: fixed;
+  border: 1px solid #000;
+  box-shadow: inset 0 0 0 1px #1a1e25, 0 3px 0 rgba(0, 0, 0, .75);
+}
+
+/* Modül aralıkları: gerçek tahtada her sütun ayrı bir kanatçık dizisidir. */
+.board tbody td + td,
+.board thead th + th { border-left: 1px solid rgba(0, 0, 0, .55); }
+
+.board thead th {
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--yellow); text-align: left;
+  padding: 7px 10px; background: #12161d;
+  border-bottom: 2px solid var(--yellow);
+  white-space: nowrap;
+}
+
+.board tbody .row > td {
+  padding: 0 10px;
+  height: var(--row-h);
+  border-top: 1px solid var(--hinge);
+  /* Menteşe (üst saç teli) VE altında mat gölge — OWN-WORLD'ün kendi sözü.
+     Gölge olmadan satır kanatçık değil, koyu bir tablo satırı okunuyordu. */
+  box-shadow: inset 0 1px 0 var(--flap-hi), inset 0 -8px 10px -10px #000;
+  background: var(--flap);
+  font-family: var(--board-font); font-weight: 600; font-size: 16px;
+  letter-spacing: .03em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.board tbody .row { cursor: pointer; }
+.board tbody .row:hover > td { background: #1b1f26; }
+.board tbody .row.open > td { background: #1e232b; }
+.board tbody .row.open > td:first-child { box-shadow: inset 0 1px 0 var(--flap-hi), inset 3px 0 0 var(--yellow); }
+.board tbody .row:focus-visible { outline-offset: -2px; }
+
+.board .c-no { width: 212px; font-family: var(--data-font); font-size: 13px; }
+/* Açma kumandası: hücrenin içindeki gerçek düğme. */
+.hinge-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  font: inherit; color: inherit; background: none; border: none;
+  padding: 0; cursor: pointer; text-align: left;
+}
+.hinge-btn:focus-visible { outline-offset: 3px; }
+/* Menteşe oku DÖNMEZ: sayfadaki tek dönme çevirmedir. Ok yön değiştirir. */
+.c-no .hinge { color: var(--faint); vertical-align: -1px; }
+.row.open .c-no .hinge { color: var(--yellow); }
+.row.open .c-no .hinge path { d: path('M1.6 6.6 5 3.2 8.4 6.6'); }
+.ledger .hinge-btn { color: var(--dim); }
+.c-tip { width: 92px; color: var(--dim); }
+.board .c-vkn { width: 130px; font-family: var(--data-font); font-size: 13px; }
+.c-durum { width: 210px; }
+.c-ham { width: 74px; }
+.c-imza { width: 92px; }
+.c-sen { width: 130px; color: var(--dim); }
+.c-sira { width: auto; }
+.c-kay { width: 190px; }
+.c-sapr { width: 168px; }
+.c-yanit { width: 160px; }
+
+.empty {
+  margin: 0; padding: 22px 14px; background: var(--board);
+  border-top: 1px solid var(--hinge); box-shadow: inset 0 1px 0 var(--flap-hi);
+  color: var(--dim); font-size: 13.5px;
+}
+.empty.sm { padding: 12px 10px; font-size: 12.5px; }
+.empty code { color: var(--text); background: #1b1f26; padding: 1px 5px; font-size: 12px; }
+
+/* ── Durum hücresi ───────────────────────────────────────────────────────── */
+.status {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--board-font); font-weight: 600; font-size: 15px;
+  letter-spacing: .08em;
+}
+.status .mark { flex: none; }
+
+.t-transit { color: #cfd3da; }
+.t-ok      { color: var(--green); }
+.t-fail    { color: var(--red); }
+.t-closed  { color: #9aa6c2; }
+.t-cancel  { color: var(--dim); }
+.t-held    { color: var(--amber); }
+
+.raw { font-family: var(--data-font); font-size: 12.5px; color: var(--dim); }
+.raw.key {
+  display: inline-flex; align-items: center; gap: 5px;
+  color: var(--green); font-weight: 500;
+}
+.anchor-word {
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .12em; color: var(--green);
+}
+.node-note.em { color: var(--text); }
+
+.seal {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .12em; color: var(--amber);
+}
+
+.held-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--board-font); font-weight: 600; font-size: 12px;
+  letter-spacing: .12em; color: var(--amber);
+}
+
+.gen {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .14em; color: #9aa6c2;
+  border: 1px solid #2c3444; padding: 3px 7px;
+}
+.gen-scen { font-family: var(--data-font); font-weight: 400; font-size: 11px; letter-spacing: 0; color: #7f8ba6; }
+
+.sapr { font-family: var(--data-font); font-size: 11.5px; }
+.sapr.ok { color: var(--green); }
+.sapr.wait { color: var(--amber); }
+
+/* ── SATIR AÇILIMI ───────────────────────────────────────────────────────── */
+.detail-row > td { padding: 0; border: none; background: var(--board); }
+
+.expand {
+  display: grid; grid-template-rows: 1fr;
+  animation: unfold 220ms cubic-bezier(.2, .8, .2, 1);
+}
+@keyframes unfold { from { grid-template-rows: 0fr; opacity: 0; } to { grid-template-rows: 1fr; opacity: 1; } }
+.expand > * { overflow: hidden; }
+
+.detail {
+  padding: 16px 14px 20px 30px;
+  background: #0b0d11;
+  border-left: 3px solid var(--yellow);
+  box-shadow: inset 0 8px 14px -10px #000;
+}
+
+.plate {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px 22px; margin: 0 0 18px;
+}
+.plate div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+/* ETTN 36 karakterdir; tek sütunda ikiye bölünüyordu. */
+.plate div.wide { grid-column: span 2; }
+.plate dt {
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+}
+.plate dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.plate dd.mono { font-size: 12px; }
+
+/* Tek dikey zaman ekseni. */
+.axis { position: relative; list-style: none; margin: 0 0 16px; padding: 0; }
+.axis::before {
+  content: ''; position: absolute; left: 89px; top: 7px; bottom: 7px;
+  /* 🔴 Bu çizgi imza etkileşiminin omurgasıdır; --edge ile canlı ekranda
+     görünmüyordu. Eksen görünmezse "tek dikey zaman ekseni" sözü boştur. */
+  width: 1px; background: #525c6b;
+}
+
+.node { display: grid; grid-template-columns: 78px 22px 1fr; align-items: start; padding: 5px 0; }
+
+.node-time { font-family: var(--data-font); font-size: 11.5px; color: var(--dim); padding-top: 1px; }
+
+.node-dot {
+  width: 7px; height: 7px; background: var(--dim); margin: 5px 0 0 8px;
+  box-shadow: 0 0 0 3px #0b0d11;
+}
+.node.key .node-dot { background: var(--green); box-shadow: 0 0 0 3px #0b0d11, 0 0 0 4px var(--green); }
+.node-dot.open { background: none; border: 1px solid var(--amber); width: 7px; height: 7px; }
+
+.node-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.node-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+
+.rule {
+  font-family: var(--data-font); font-weight: 500; font-size: 11.5px;
+  color: var(--yellow); border: 1px solid #3a2f10; padding: 0 5px;
+}
+.rule.next { color: var(--amber); border-color: #3a2f10; }
+.rule.held { display: inline-flex; align-items: center; gap: 5px; color: var(--amber); border: none; padding: 0;
+  font-family: var(--board-font); font-weight: 600; letter-spacing: .12em; font-size: 12px; }
+
+.move { font-family: var(--board-font); font-weight: 500; font-size: 13.5px; letter-spacing: .04em; color: var(--dim); }
+.move b { color: var(--text); font-weight: 600; }
+.move .arrow { color: var(--faint); vertical-align: 0; margin: 0 2px; }
+
+/* Eksendeki zaman boşluğu: kesik parça, süreyi kendisi söyler. */
+.node.gap { padding: 2px 0; align-items: center; }
+.node.gap .gap-line {
+  grid-column: 2; justify-self: center; width: 1px; height: 18px;
+  background: repeating-linear-gradient(180deg, #525c6b 0 3px, transparent 3px 6px);
+}
+.gap-label { grid-column: 3; font-family: var(--data-font); font-size: 11px; color: var(--faint); }
+
+.alarm {
+  font-family: var(--data-font); font-size: 11px; color: var(--red);
+  border: 1px solid #40201f; padding: 0 5px;
+}
+
+.node-note { font-size: 12.5px; color: var(--dim); }
+.node-src { font-family: var(--data-font); font-size: 11px; color: var(--faint); }
+
+.chain {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--board-font); font-weight: 500; font-size: 12.5px; letter-spacing: .06em;
+  color: #9aa6c2; background: none; border: 1px solid #2c3444; padding: 5px 10px;
+  cursor: pointer; margin-bottom: 14px;
+}
+.chain:hover { border-color: #4a597a; color: #c3cee6; }
+
+.acts { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+.acts button {
+  font-family: var(--board-font); font-weight: 600; font-size: 11.5px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text); background: var(--flap);
+  border: 1px solid var(--edge); border-top-color: var(--flap-hi);
+  padding: 6px 11px; cursor: pointer;
+}
+.acts button:hover { background: #232830; border-color: #3a4049; }
+
+.gate { margin: 0 8px 0 0; font-size: 12.5px; color: var(--amber); }
+
+/* ── SERVİS BANDI: tahta değil, tahtanın arkası ──────────────────────────── */
+.service { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 22px; margin-top: 8px; }
+.strip { min-width: 0; }
+
+.strip { background: #0b0c0f; border: 1px solid var(--edge-soft); }
+
+.strip-head {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding: 8px 11px; border-bottom: 1px solid var(--edge-soft); background: #0e1014;
+}
+.strip-head h3 {
+  margin: 0; font-family: var(--board-font); font-weight: 600; font-size: 12px;
+  letter-spacing: .2em; color: var(--dim);
+}
+.strip-head .dim { font-size: 12px; }
+
+.hook-line { margin: 0; padding: 8px 11px; font-size: 12.5px; border-bottom: 1px solid var(--edge-soft); }
+.hook-line code { color: var(--text); font-size: 12px; }
+
+.table-scroll { overflow-x: auto; }
+.ledger { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+/*
+ * Sabit düzende sütunlar eşit paylaşılıyordu ve istek günlüğünün UÇ sütunu
+ * üç nokta ile kesiliyordu. Bu günlüğün bütün değeri ucun okunmasında.
+ */
+.ledger.hooks th:nth-child(1) { width: 46px; }
+.ledger.hooks th:nth-child(2) { width: 190px; }
+.ledger.hooks th:nth-child(3) { width: 104px; }
+.ledger.hooks th:nth-child(4) { width: 64px; }
+.ledger.hooks th:nth-child(5) { width: 52px; }
+.ledger.hooks th:nth-child(7) { width: 116px; }
+
+.ledger.reqs th:nth-child(1) { width: 100px; }
+.ledger.reqs th:nth-child(2) { width: 62px; }
+.ledger.reqs th:nth-child(4) { width: 46px; }
+.ledger.reqs th:nth-child(5) { width: 62px; }
+.ledger.reqs th:nth-child(6) { width: 146px; }
+
+.ledger.firms th:nth-child(1) { width: 116px; }
+.ledger.firms th:nth-child(3) { width: 64px; }
+.ledger.firms th:nth-child(4) { width: 82px; }
+
+.ledger thead th {
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .14em; color: var(--faint); text-align: left;
+  padding: 5px 9px; border-bottom: 1px solid var(--edge-soft); white-space: nowrap;
+}
+
+.ledger tbody td {
+  padding: 4px 9px; font-size: 12.5px; height: 26px;
+  border-bottom: 1px solid #14171c;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ledger tbody .row { cursor: pointer; }
+.ledger tbody .row:hover > td { background: #14171c; }
+.ledger tbody .row.open > td { background: #191d23; }
+.ledger .mono { font-size: 12px; }
+.ledger .bad { color: var(--red); }
+.ledger .method { color: var(--dim); }
+
+.ledger button {
+  font-family: var(--board-font); font-weight: 500; font-size: 11px;
+  letter-spacing: .08em; color: var(--dim); background: none;
+  border: 1px solid var(--edge-soft); padding: 2px 7px; cursor: pointer;
+}
+.ledger button:hover { color: var(--text); border-color: var(--edge); }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; font-family: var(--data-font); font-size: 12px; }
+.pill.delivered { color: var(--green); }
+.pill.dead { color: var(--red); }
+.pill.pending, .pill.retrying { color: var(--amber); }
+
+.raw-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--edge-soft); }
+.raw-pair > div { background: #0b0c0f; padding: 8px 10px; min-width: 0; }
+.raw-pair h4 {
+  margin: 0 0 5px; font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .16em; color: var(--yellow);
+}
+.raw-pair pre {
+  margin: 0; font-size: 11px; line-height: 1.5; color: #c9ccd2;
+  white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto;
+}
+
+.toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--dim); cursor: pointer; }
+.toggle.sm { font-size: 11.5px; }
+.toggle input { accent-color: var(--yellow); }
+
+/* ── ÇEKMECE ─────────────────────────────────────────────────────────────── */
+.drawer {
+  position: fixed; inset: 0 0 0 auto; width: min(580px, 94vw);
+  background: #0b0d11; border-left: 1px solid var(--edge);
+  box-shadow: -18px 0 40px rgba(0, 0, 0, .6);
+  transform: translateX(100%); visibility: hidden;
+  transition: transform 240ms cubic-bezier(.2, .8, .2, 1), visibility 240ms;
+  z-index: 40; display: flex; flex-direction: column;
+}
+.drawer.open { transform: none; visibility: visible; }
+
+.drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--hinge);
+  background: linear-gradient(180deg, #14171c, #0b0d10);
+  box-shadow: inset 0 1px 0 #262b33;
+}
+.drawer-head h2 {
+  margin: 0; font-family: var(--board-font); font-weight: 600; font-size: 16px; letter-spacing: .24em;
+}
+.close {
+  background: none; border: 1px solid var(--edge); color: var(--dim);
+  font-family: var(--board-font); font-size: 11px; letter-spacing: .12em;
+  padding: 4px 10px; cursor: pointer;
+}
+.close:hover { color: var(--text); border-color: #3a4049; }
+
+.drawer-body { padding: 16px; overflow-y: auto; flex: 1; }
+.drawer-body h3 {
+  margin: 22px 0 8px; font-family: var(--board-font); font-weight: 600; font-size: 12px;
+  /* Geniş aralık YALNIZ kısa versal etikette meşrudur; karışık metinde okumayı bozar. */
+  letter-spacing: .18em; text-transform: uppercase; color: var(--yellow);
+}
+.drawer-body h3:first-of-type { margin-top: 0; }
+
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 14px; }
+
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field.wide { grid-column: 1 / -1; }
+.field > span {
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+}
+.field input {
+  background: #101318; border: 1px solid var(--edge); color: var(--text);
+  font-family: var(--data-font); font-size: 13px; padding: 7px 8px;
+}
+.field input:focus { border-color: var(--yellow); outline: none; }
+.field input::placeholder { color: var(--faint); }
+
+fieldset { border: 1px solid var(--edge-soft); margin: 16px 0; padding: 10px 12px 12px; }
+legend {
+  font-family: var(--board-font); font-weight: 600; font-size: 11px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--faint); padding: 0 5px;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; cursor: pointer;
+  font-family: var(--data-font); font-size: 11.5px;
+  border: 1px solid var(--edge); padding: 4px 8px; color: var(--dim);
+}
+.chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.chip.on { background: var(--yellow); color: #000; border-color: var(--yellow); }
+.chip:has(input:focus-visible) { outline: 2px solid var(--yellow); outline-offset: 2px; }
+
+.primary {
+  margin-top: 16px;
+  font-family: var(--board-font); font-weight: 600; font-size: 13px;
+  letter-spacing: .14em; text-transform: uppercase;
+  background: var(--yellow); color: #000; border: none; padding: 9px 18px; cursor: pointer;
+}
+.primary:disabled { background: var(--edge); color: var(--dim); cursor: default; }
+
+/* ── Alt bant ────────────────────────────────────────────────────────────── */
+.foot {
+  display: flex; gap: 20px; flex-wrap: wrap; justify-content: space-between;
+  padding: 14px var(--gut); border-top: 1px solid var(--hinge);
+  background: #0a0b0e; font-size: 12px; color: var(--dim);
+}
+.foot b { color: var(--text); }
+
+/* ── Dar ekran ───────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  /* 🔴 `1fr` DEĞİL: grid öğesinin varsayılan `min-width: auto`'su, içindeki
+     min-width'li tabloyu izleyip kabı şişiriyor ve SAYFAYI kaydırıyordu. */
+  .service { grid-template-columns: minmax(0, 1fr); }
+  .raw-pair { grid-template-columns: minmax(0, 1fr); }
+  .warn { grid-template-columns: 1fr; }
+  .warn p { padding-right: 0; }
+  .warn-hide { position: static; margin-top: 6px; justify-self: start; }
+}
+
+@media (max-width: 760px) {
+  :root { --gut: 10px; }
+
+  .rail { gap: 12px; padding: 9px var(--gut); }
+  .brand { min-width: 0; }
+  .clocks { gap: 16px; width: 100%; order: 3; }
+  .clock-face { font-size: 21px; }
+  .rail-right { width: 100%; order: 4; margin-left: 0; }
+
+  /* Şeritte konumlu düğmeler çakışır; dar ekranda sıraya dizilirler. */
+  .timeline { padding: 10px var(--gut); }
+  .tl-jumps { height: auto; display: flex; gap: 6px; margin-bottom: 8px; }
+  .jump { position: static; transform: none; border-bottom: 1px solid var(--edge); }
+  .jump::after { display: none; }
+  .tl-scale { font-size: 9px; }
+  .tl-tick { display: none; }
+  .tl-tick:nth-of-type(3), .tl-tick:last-of-type { display: inline; }
+  .jump:last-of-type, .jump.reset { transform: none; }
+
+  /* Tahta yatay kayar: sütun hizası tahtanın özüdür, sarmalamak onu bozar. */
+  .board-wrap { overflow-x: auto; }
+  .board { min-width: 880px; }
+  /*
+   * 390px'te yalnız BELGE NO + TİP + ALICI görünüyordu: panelin üç sorusundan
+   * ikisi kaydırmadan cevapsızdı. İkincil kimlik sütunları dar ekranda
+   * TAHTADAN ÇEKİLİR — hepsi satır açılımının künyesinde durur, kaybolmaz.
+   */
+  .c-no { width: 118px; }
+  .c-durum { width: 168px; }
+  .c-tip, .c-vkn, .c-kay { display: none; }
+  .board { min-width: 620px; }
+  /* Aynı karar servis bandı için de geçerli — ölçüldü: sabit sütunlar dar
+     ekranda SAYFAYI kaydırıyordu, kendi kabında kaymaları gerekir. */
+  .ledger.hooks { min-width: 660px; }
+  .ledger.reqs { min-width: 600px; }
+  .ledger.firms { min-width: 420px; }
+  /*
+   * Tahta yatay kayar ama SATIR AÇILIMI okuma içeriğidir: kaymamalı. Hücre sol
+   * kenara yapışır ve künye ekran genişliğine oturur (3 sütun → 2 sütun).
+   */
+  .detail-row > td { position: sticky; left: 0; }
+  .detail { padding: 14px 12px 16px 18px; width: calc(100vw - 2 * var(--gut)); }
+  .axis::before { left: 71px; }
+  .node { grid-template-columns: 62px 20px 1fr; }
+  .node-time { font-size: 10.5px; }
+
+  .board-head h2 { font-size: 16px; letter-spacing: .2em; }
+}
+
+/* ── Hareketi azalt ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* Çevirme tek karelik bir vurguya iner: hareket gider, DEĞİŞİM HABERİ kalır. */
+  .flap.turn { animation: mark 600ms step-end both; }
+  @keyframes mark { 0% { background: rgba(245, 184, 32, .35); } 100% { background: none; } }
+
+  .expand { animation: none; }
+  .drawer { transition: none; }
+  .c-no .hinge { transition: none; }
+}
