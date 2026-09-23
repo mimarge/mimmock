@@ -1,0 +1,18 @@
+# gitleaks — varsayılan kurallar + GEREKÇELİ istisnalar. Buraya eklenen her
+# satır "bu bilerek açık" demektir; gerçek bir sır asla buraya girmez.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "MimMock'un bilerek açık duran sandbox değerleri"
+paths = [
+  # Kendinden imzalı TEST sertifikasının anahtarı. Gerçek olmadığını CI kapı 3
+  # ayrıca ölçer (kendinden imzalı, TEST damgalı, CA değil, anahtar eşleşir).
+  '''server/src/signing/test-cert/test-key\.pem''',
+]
+regexes = [
+  # Tohum kiracı anahtarı ve tohum webhook alıcısının anahtarı: yerel sandbox'ın
+  # herkese açık varsayılanları; belgelerde kasten yazılı.
+  '''mimmock_dev_key''',
+  '''whsec_mimmock_sink''',
+]

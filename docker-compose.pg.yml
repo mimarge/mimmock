@@ -1,0 +1,32 @@
+# Dış PostgreSQL katmanı — ekip ortak sandbox'ı (plan K3'ün ikinci yolu).
+#
+#   ./scripts/mimmock up --pg
+#   docker compose -f docker-compose.yml -f docker-compose.pg.yml up -d --build
+#
+# Aynı şema, aynı davranış; yalnız sürücü değişir (`/healthz` → "dialect": "pg").
+services:
+  mimmock:
+    environment:
+      MIMMOCK_DB: postgres://mimmock:mimmock@db:5432/mimmock
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    container_name: mimmock-db
+    environment:
+      POSTGRES_USER: mimmock
+      POSTGRES_PASSWORD: mimmock
+      POSTGRES_DB: mimmock
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mimmock"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - mimmock-pg:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  mimmock-pg:

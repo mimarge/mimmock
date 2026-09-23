@@ -1,0 +1,211 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: mimmock
+          POSTGRES_PASSWORD: mimmock
+          POSTGRES_DB: mimmock
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mimmock"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.30.0 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Şema tek kaynak mı: üretilmiş lehçe dosyaları spec ile uyumlu olmalı.
+      - name: db codegen guncel mi
+        run: pnpm --filter @mimmock/server db:codegen:check
+
+      - name: typecheck
+        run: pnpm typecheck
+
+      # Belge kopyaları (llms.txt, llms-full.txt, docs/openapi.json) üretilmiş
+      # dosyalardır; kaynak değişip kopya üretilmediyse kırmızı.
+      - name: belge kopyalari guncel mi
+        run: pnpm --filter @mimmock/server docs:check
+
+      # Testler İKİ sürücüde de koşar — "PG'ye geçince aynı şema" ölçüsü (M1).
+      # `.live.test.ts` dosyaları CANLI mimkit ister; ayrı işte koşarlar.
+      - name: test (sqlite + pg, cevrimdisi)
+        env:
+          MIMMOCK_TEST_PG: postgres://mimmock:mimmock@localhost:5432/mimmock
+        run: pnpm --filter @mimmock/server test:offline
+
+      - name: panel build
+        run: pnpm --filter @mimmock/panel build
+
+  # 🔴 SADAKAT ÖLÇÜMÜ (plan §6 / M2) — CANLI mimkit ister (K4).
+  #
+  # mimkit TEK dış bağımlılıktır: doğrulama + numaralama + görüntü. İş ancak
+  # `vars.MIMMOCK_MIMKIT_URL` tanımlıysa koşar; tanımlı değilse ATLANIR ve bu GitHub
+  # arayüzünde görünür — sessizce yeşil sayılmaz. Testlerin kendisi de mimkit'siz
+  # koşarsa ATLANMAZ, DÜŞER ("atlanan test = ölçülmemiş").
+  fidelity:
+    runs-on: ubuntu-latest
+    if: ${{ vars.MIMMOCK_MIMKIT_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.30.0 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: sadakat + ingest kapilari + numarator + goruntu (canli mimkit)
+        env:
+          MIMMOCK_TEST_MIMKIT_URL: ${{ vars.MIMMOCK_MIMKIT_URL }}
+          MIMMOCK_TEST_MIMKIT_TOKEN: ${{ secrets.MIMMOCK_MIMKIT_TOKEN }}
+          # Her CI koşumu kendi seri kapsamında çalışsın — koşumlar birbirinin
+          # numara defterini kirletmesin.
+          MIMMOCK_TEST_SCOPE: ci-${{ github.run_id }}
+        run: pnpm --filter @mimmock/server test:live
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: imaj kurulur ve temiz makinede ayaga kalkar
+        run: |
+          docker build -t mimmock:ci .
+
+          # K4 kapısı: mimkit YOKKEN mock KALKMAMALI (plan K4).
+          # Bu bir ölçümdür: container ayakta kalırsa kapı sağır demektir.
+          docker run -d --name mimmock-k4 \
+            -e MIMMOCK_MIMKIT_URL=http://127.0.0.1:9999 -e MIMMOCK_MIMKIT_TOKEN=yok mimmock:ci
+          sleep 8
+          if [ "$(docker inspect -f '{{.State.Running}}' mimmock-k4)" = "true" ]; then
+            echo "::error::K4 kapisi sagir — mimkit yokken mock ayakta kaldi"
+            docker rm -f mimmock-k4; exit 1
+          fi
+          docker logs mimmock-k4 2>&1 | grep -q "mimkit hazır değil" \
+            || { echo "::error::K4 hata mesaji sebebini soylemiyor"; exit 1; }
+          docker rm -f mimmock-k4
+          echo "K4 kapisi: mock kalkmadi ve sebebini soyledi"
+
+          # Çevrimdışı kip AÇIKKEN mock kalkar ama "degraded" der ve belge ALMAZ.
+          docker run -d --name mimmock-ci -p 8088:8088 \
+            -e MIMMOCK_MIMKIT_URL=http://127.0.0.1:9999 -e MIMMOCK_MIMKIT_TOKEN=yok \
+            -e MIMMOCK_ALLOW_OFFLINE=1 mimmock:ci
+          for i in $(seq 1 60); do
+            curl -sS http://127.0.0.1:8088/healthz >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -sS http://127.0.0.1:8088/healthz | tee /dev/stderr | grep -q '"status":"degraded"'
+          docker rm -f mimmock-ci
+
+  # Plan §2b'nin DÖRT KAPISI — depo public'tir, her push'ta koşar.
+  public-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 'kapi 1 — gercek kisisel veri dizininin izi sifir'
+        run: |
+          # Aranan dizgi PARÇALI kurulur; aksi hâlde bu dosyanın kendisi kapıyı
+          # sürekli kırmızıya düşürürdü (bekçi kendini yakalamamalı).
+          NEEDLE="$(printf 'mimsoft-prod-%s' 'xmls')"
+          if grep -rIn --exclude-dir=.git --exclude-dir=node_modules "$NEEDLE" . ; then
+            echo "::error::Depoda gercek-veri dizininin izi var (plan §2b kapi 1)"
+            exit 1
+          fi
+          echo "kapi 1: temiz"
+
+      - name: 'kapi 1b — tek dis bagimlilik mimkit (yedek dogrulama yolunun adi sifir)'
+        run: |
+          # Karar (2026-09-23): doğrulama YALNIZ mimkit'ten. Yedek yolun adı depoda
+          # hiçbir yerde geçmez — kod, belge, test, yorum dahil. Dizgi parçalı kurulur.
+          NEEDLE="$(printf 'x%s' 'slt')"
+          if grep -rIni --exclude-dir=.git --exclude-dir=node_modules "$NEEDLE" . ; then
+            echo "::error::Yedek dogrulama yolunun izi var — tek bagimlilik mimkit olmali"
+            exit 1
+          fi
+          echo "kapi 1b: temiz"
+
+      - name: 'kapi 2 — gizli deger sizintisi sifir (kaba tarama)'
+        run: |
+          # Kaba desen taraması; gerçek tarayıcı (gitleaks) bir sonraki adımda.
+          #
+          # `test-cert/` HARİÇ tutulur çünkü orada bilerek açık duran bir TEST
+          # anahtarı var (plan §2b: "amacına özel üretilmiş, hiçbir zincire
+          # bağlanmayan atılabilir anahtar"). Bu bir delik DEĞİL: aşağıdaki kapı 3
+          # o dizini ayrıca denetler ve içine gerçek bir sertifika konursa kırmızıya
+          # döner.
+          if grep -rInE --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=test-cert \
+             '(BEGIN (RSA |EC )?PRIVATE KEY|xox[baprs]-|gh[pousr]_[A-Za-z0-9]{20,})' . ; then
+            echo "::error::Olasi gizli deger sizintisi (plan §2b kapi 2)"
+            exit 1
+          fi
+          echo "kapi 2 (kaba): temiz"
+
+      - name: 'kapi 2b — gitleaks (butun git gecmisi)'
+        run: |
+          # Tam geçmiş gerekir: yalnız son commit'e bakmak, eski bir commit'te kalan
+          # sırrı görmezdi. Bilinçli istisnalar `.gitleaks.toml`'da gerekçesiyle.
+          git fetch --unshallow 2>/dev/null || true
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1 \
+            git /repo --config /repo/.gitleaks.toml --no-banner --redact
+
+      - name: 'kapi 3 — test sertifikasi GERCEK sertifika olamaz'
+        run: |
+          DIR=server/src/signing/test-cert
+          CERT="$DIR/test-cert.pem"
+          KEY="$DIR/test-key.pem"
+
+          # 3.1 Dizinde yalnız beklenen iki dosya olmalı — üçüncü bir anahtar sızmasın.
+          FILES=$(ls -1 "$DIR" | sort | tr '\n' ' ')
+          if [ "$FILES" != "test-cert.pem test-key.pem " ]; then
+            echo "::error::test-cert dizininde beklenmeyen dosya: $FILES"
+            exit 1
+          fi
+
+          # 3.2 KENDİNDEN İMZALI olmalı (hiçbir zincire bağlanmaz).
+          SUBJ=$(openssl x509 -in "$CERT" -noout -subject | sed 's/^subject=//')
+          ISSU=$(openssl x509 -in "$CERT" -noout -issuer  | sed 's/^issuer=//')
+          if [ "$SUBJ" != "$ISSU" ]; then
+            echo "::error::Sertifika kendinden imzali DEGIL — gercek bir zincire bagli olabilir"
+            exit 1
+          fi
+
+          # 3.3 Adı gerçek olmadığını SÖYLEMELİ.
+          echo "$SUBJ" | grep -q "TEST" || { echo "::error::Sertifika adinda TEST damgasi yok"; exit 1; }
+          echo "$SUBJ" | grep -qE "GERCEK DEGIL|NOT A REAL" \
+            || { echo "::error::Sertifika adi gercek olmadigini soylemiyor"; exit 1; }
+
+          # 3.4 CA olmamalı — baska sertifika imzalayamaz.
+          if openssl x509 -in "$CERT" -noout -text | grep -q "CA:TRUE"; then
+            echo "::error::Test sertifikasi CA olarak isaretli"
+            exit 1
+          fi
+
+          # 3.5 Anahtar bu sertifikaya ait olmalı (baska bir anahtar birakilmasin).
+          CM=$(openssl x509 -in "$CERT" -noout -modulus | openssl md5)
+          KM=$(openssl pkey -in "$KEY" -pubout -outform PEM | openssl rsa -pubin -noout -modulus | openssl md5)
+          if [ "$CM" != "$KM" ]; then
+            echo "::error::Anahtar sertifikayla eslesmiyor"
+            exit 1
+          fi
+
+          echo "kapi 3: sertifika kendinden imzali, TEST damgali, CA degil"
+          echo "  $SUBJ"
+
+      # kapi 4 (ornek korpus sentetik kimlik) → `corpus-identity.test.ts` her
+      # koşumda ölçüyor; CI'daki `check` isi onu kapsiyor.

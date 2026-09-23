@@ -1,0 +1,411 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# mimmock — yerel sandbox'ı kaldırıp yöneten yardımcı.
+#
+#   ./scripts/mimmock up            kur/güncelle ve başlat, hazır olunca adresleri yaz
+#   ./scripts/mimmock help          bütün komutlar
+#
+# Yalnız `docker compose`'u sarar; yaptığı her şey README'de düz komutlarla da var.
+# macOS'un bash 3.2'siyle uyumludur.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+SEED_KEY="mimmock_dev_key"
+CONTAINER="mimmock"
+DB_CONTAINER="mimmock-db"
+
+if [ -t 1 ]; then
+  B=$'\033[1m'; D=$'\033[2m'; R=$'\033[31m'; G=$'\033[32m'; Y=$'\033[33m'; Z=$'\033[0m'
+else
+  B=''; D=''; R=''; G=''; Y=''; Z=''
+fi
+ok()   { printf '%s✓%s %s\n' "$G" "$Z" "$*"; }
+warn() { printf '%s!%s %s\n' "$Y" "$Z" "$*"; }
+err()  { printf '%s✗%s %s\n' "$R" "$Z" "$*" >&2; }
+die()  { err "$*"; exit 1; }
+step() { printf '\n%s%s%s\n' "$B" "$*" "$Z"; }
+
+# .env'den tek değer okur (dosyayı KAYNAK OLARAK çalıştırmaz).
+env_get() {
+  [ -f .env ] || { echo ""; return; }
+  local line
+  line="$(grep -E "^$1=" .env | tail -n 1 || true)"
+  line="${line#*=}"
+  line="${line%\"}"; line="${line#\"}"
+  echo "$line"
+}
+
+port() { local p; p="$(env_get MIMMOCK_HOST_PORT)"; echo "${p:-8088}"; }
+base() { echo "http://localhost:$(port)"; }
+
+# Ekranda kullanıcı:parola görünmesin.
+redact() { echo "$1" | sed -E 's#(://)[^/@]+@#\1***@#'; }
+
+uses_pg() {
+  [ "${MIMMOCK_PG:-0}" = "1" ] && return 0
+  docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$DB_CONTAINER"
+}
+
+compose() {
+  if uses_pg; then
+    docker compose -f docker-compose.yml -f docker-compose.pg.yml "$@"
+  else
+    docker compose -f docker-compose.yml "$@"
+  fi
+}
+
+need_docker() {
+  command -v docker >/dev/null 2>&1 || die "Docker bulunamadı. Kurun: https://docs.docker.com/get-docker/"
+  docker info >/dev/null 2>&1 || die "Docker çalışmıyor. Docker Desktop'ı / servisini başlatın."
+  docker compose version >/dev/null 2>&1 || die "'docker compose' (v2) yok. Docker'ı güncelleyin."
+}
+
+open_url() {
+  if command -v open >/dev/null 2>&1; then open "$1"
+  elif command -v xdg-open >/dev/null 2>&1; then xdg-open "$1" >/dev/null 2>&1
+  elif command -v start >/dev/null 2>&1; then start "$1"
+  else echo "$1"; fi
+}
+
+confirm() {
+  [ "${MIMMOCK_YES:-0}" = "1" ] && return 0
+  [ -t 0 ] || die "Onay gerekiyor. Etkileşimsiz ortamda MIMMOCK_YES=1 verin."
+  local answer
+  printf '%s [e/H] ' "$1"
+  read -r answer
+  case "$answer" in e|E|evet|y|Y|yes) return 0 ;; *) echo "vazgeçildi"; exit 1 ;; esac
+}
+
+# ── init ─────────────────────────────────────────────────────────────────────
+KEY_REQUEST="mimkit adresi ve anahtarı için bilgi@mimsoft.com.tr adresine e-posta gönderin"
+
+cmd_init() {
+  if [ -f .env ]; then
+    ok ".env zaten var — dokunulmadı"
+  else
+    cp .env.example .env
+    ok ".env oluşturuldu (.env.example'dan)"
+  fi
+  local url token
+  url="$(env_get MIMMOCK_MIMKIT_URL)"; token="$(env_get MIMMOCK_MIMKIT_TOKEN)"
+  if { [ -z "$url" ] || [ -z "$token" ]; } && [ "$(env_get MIMMOCK_ALLOW_OFFLINE)" != "1" ]; then
+    if [ -t 0 ]; then
+      echo
+      echo "MimMock'un tek bağımlılığı mimkit: doğrulama, numaralama ve görüntü oradan gelir."
+      echo "($KEY_REQUEST.) Boş bırakırsanız çevrimdışı kipte başlar."
+      if [ -z "$url" ]; then
+        printf 'mimkit adresi: '; read -r url
+        [ -n "$url" ] && set_env MIMMOCK_MIMKIT_URL "$url"
+      fi
+      if [ -n "$url" ] && [ -z "$token" ]; then
+        printf 'mimkit anahtarı: '; read -rs token; echo
+        [ -n "$token" ] && set_env MIMMOCK_MIMKIT_TOKEN "$token"
+      fi
+      if [ -z "$url" ] || [ -z "$token" ]; then
+        set_env MIMMOCK_ALLOW_OFFLINE 1
+        warn "Çevrimdışı kip açıldı: panel ve yönetim çalışır, belge GÖNDERME 503 döner."
+      else
+        ok "mimkit bilgileri .env'e yazıldı"
+      fi
+    else
+      warn "MIMMOCK_MIMKIT_URL / MIMMOCK_MIMKIT_TOKEN boş. .env'i düzenleyin ($KEY_REQUEST)"
+      warn "ya da MIMMOCK_ALLOW_OFFLINE=1 verin."
+    fi
+  fi
+}
+
+set_env() {
+  if grep -qE "^$1=" .env; then
+    local tmp; tmp="$(mktemp)"
+    awk -v k="$1" -v v="$2" 'BEGIN{FS=OFS="="} $1==k{$0=k"="v} {print}' .env > "$tmp" && mv "$tmp" .env
+  else
+    printf '%s=%s\n' "$1" "$2" >> .env
+  fi
+}
+
+# ── doctor ───────────────────────────────────────────────────────────────────
+cmd_doctor() {
+  local problems=0
+  step "Ön koşullar"
+  need_docker; ok "Docker ve compose v2 hazır"
+
+  if [ -f .env ]; then ok ".env var"; else warn ".env yok — './scripts/mimmock init' çalıştırın"; problems=$((problems+1)); fi
+
+  local p; p="$(port)"
+  if docker ps --format '{{.Names}} {{.Ports}}' | grep -v "^$CONTAINER " | grep -q ":$p->"; then
+    err "Port $p başka bir container'da kullanımda. .env'de MIMMOCK_HOST_PORT'u değiştirin."
+    problems=$((problems+1))
+  elif ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER" && (command -v lsof >/dev/null 2>&1 && lsof -iTCP:"$p" -sTCP:LISTEN >/dev/null 2>&1); then
+    err "Port $p ana makinede kullanımda. .env'de MIMMOCK_HOST_PORT'u değiştirin."
+    problems=$((problems+1))
+  else
+    ok "Port $p uygun"
+  fi
+
+  step "mimkit — tek bağımlılık (doğrulama + numaralama + görüntü)"
+  local url token offline
+  url="$(env_get MIMMOCK_MIMKIT_URL)"; token="$(env_get MIMMOCK_MIMKIT_TOKEN)"
+  offline="$(env_get MIMMOCK_ALLOW_OFFLINE)"
+  if [ -z "$url" ] || [ -z "$token" ]; then
+    if [ "$offline" = "1" ]; then
+      warn "Ayarlı değil — ÇEVRİMDIŞI kip: belge gönderme ve görüntü uçları 503 döner"
+    else
+      err "Adres ya da anahtar eksik ve çevrimdışı kip kapalı → container KALKMAZ."
+      echo "    .env'de MIMMOCK_MIMKIT_URL ve MIMMOCK_MIMKIT_TOKEN verin ($KEY_REQUEST)"
+      echo "    ya da MIMMOCK_ALLOW_OFFLINE=1 yapın."
+      problems=$((problems+1))
+    fi
+  else
+    # Adres ekrana BASILMAZ: ekran görüntüsü ve CI günlüğü paylaşılır.
+    ok "Adres ve anahtar ayarlı"
+    case "$url" in
+      *://localhost*|*://127.0.0.1*)
+        err "Adres 'localhost' — container içinde bu container'ın KENDİSİDİR."
+        echo "    Servis ana makinenizdeyse: $(redact "$url" | sed -E 's#://(localhost|127\.0\.0\.1)#://host.docker.internal#')"
+        problems=$((problems+1)) ;;
+    esac
+    # Sunucunun açılış sondasıyla AYNI: /healthz anahtar denetlemez; XML olmayan bir
+    # gövdeyle doğrulama ucu 422 dönerse erişildi VE anahtar geçerli demektir.
+    local probe code
+    probe="$(echo "$url" | sed -E 's#://host\.docker\.internal#://localhost#; s#/+$##')"
+    if command -v curl >/dev/null 2>&1; then
+      code="$(curl -s -o /dev/null -w '%{http_code}' -m 10 -X POST "$probe/v1/validate" \
+        -H "authorization: Bearer $token" -H 'content-type: application/json' \
+        -d '{"xmlBase64":"aGF6aXJsaWstc29uZGFzaQ=="}' || true)"
+      case "$code" in
+        422|200) ok "Erişildi ve anahtar geçerli" ;;
+        401|403) err "Anahtar REDDEDİLDİ ($code). $KEY_REQUEST."; problems=$((problems+1)) ;;
+        000|"")  err "Erişilemedi. MIMMOCK_MIMKIT_URL'i ve ağ bağlantısını denetleyin."; problems=$((problems+1)) ;;
+        *)       warn "Beklenmeyen yanıt: HTTP $code" ;;
+      esac
+    fi
+  fi
+
+  echo
+  if [ "$problems" -gt 0 ]; then err "$problems sorun var."; return 1; fi
+  ok "Hazır."
+}
+
+# ── up / down / restart ──────────────────────────────────────────────────────
+cmd_up() {
+  local offline=0 build=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --pg) export MIMMOCK_PG=1 ;;
+      --build) build=1 ;;
+      --offline) offline=1 ;;
+      *) die "Bilinmeyen seçenek: $1" ;;
+    esac
+    shift
+  done
+  need_docker
+  [ -f .env ] || cmd_init
+  if [ "$offline" = "1" ]; then
+    set_env MIMMOCK_ALLOW_OFFLINE 1
+    warn ".env'e MIMMOCK_ALLOW_OFFLINE=1 yazıldı (kalıcı). Geri almak için 0 yapın."
+  fi
+
+  if ! cmd_doctor; then
+    echo
+    die "Önce yukarıdaki sorunları giderin (ayrıntı: README → Kurulum → Sorun giderme)."
+  fi
+
+  if [ "$build" = "1" ]; then
+    step "İmaj kaynaktan derleniyor ve başlatılıyor"
+    compose up -d --build
+  else
+    step "Yayımlanmış imaj çekiliyor ve başlatılıyor"
+    # Çekilemezse (ağ yok, sürüm yok) kaynaktan derlemeye düşer — sessiz değil.
+    if ! compose pull mimmock; then
+      warn "İmaj çekilemedi — kaynaktan derleniyor."
+      compose up -d --build
+    else
+      compose up -d
+    fi
+  fi
+
+  step "Hazır olması bekleniyor"
+  local i code
+  for i in $(seq 1 60); do
+    code="$(curl -s -o /dev/null -w '%{http_code}' -m 2 "$(base)/healthz" || true)"
+    if [ "$code" = "200" ] || [ "$code" = "503" ]; then break; fi
+    if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
+      err "Container durdu. Son günlük:"
+      compose logs --tail 30 mimmock || true
+      exit 1
+    fi
+    sleep 2
+  done
+  if [ "$code" != "200" ] && [ "$code" != "503" ]; then
+    err "120 saniyede hazır olmadı. Son günlük:"; compose logs --tail 40 mimmock || true; exit 1
+  fi
+  cmd_info
+}
+
+cmd_down()    { need_docker; compose down; ok "Durduruldu (veri korunuyor)."; }
+cmd_restart() { need_docker; compose restart mimmock; ok "Yeniden başlatıldı."; }
+
+# ── info / status ────────────────────────────────────────────────────────────
+cmd_info() {
+  local b; b="$(base)"
+  local health; health="$(curl -s -m 3 "$b/healthz" || true)"
+  echo
+  if echo "$health" | grep -q '"status":"ok"'; then
+    ok "${B}MimMock hazır${Z}"
+  elif echo "$health" | grep -q '"status":"degraded"'; then
+    warn "${B}MimMock ÇEVRİMDIŞI kipte${Z} — mimkit yok, belge gönderme 503 döner"
+  else
+    err "MimMock yanıt vermiyor: $b/healthz"; return 1
+  fi
+  cat <<EOF
+
+  Panel            $b
+  API referansı    $b/docs
+  OpenAPI          $b/openapi.json
+  LLM kılavuzu     $b/llms-full.txt
+
+  Kimlik           Authorization: Bearer $SEED_KEY
+                   X-Company: 1111111111   (gönderici)  ·  2222222222 (alıcı)
+
+  ${D}Deneyin:${Z}
+  curl -s $b/v1/companies -H 'authorization: Bearer $SEED_KEY'
+
+EOF
+}
+
+cmd_status() {
+  need_docker
+  compose ps
+  echo
+  curl -s -m 3 "$(base)/healthz" | sed 's/,/,\n  /g' || err "yanıt yok"
+  echo
+}
+
+cmd_logs() { need_docker; compose logs "${@:---tail=100}" mimmock; }
+
+cmd_open() {
+  case "${1:-panel}" in
+    panel) open_url "$(base)/" ;;
+    docs|api) open_url "$(base)/docs" ;;
+    llms|llm) open_url "$(base)/llms-full.txt" ;;
+    *) die "open [panel|docs|llms]" ;;
+  esac
+}
+
+# ── veri: reset / backup / restore / destroy ─────────────────────────────────
+cmd_reset() {
+  confirm "TÜM belge, webhook ve günlük silinecek; tohum yeniden yazılacak. Devam?"
+  curl -sf -m 10 -X POST "$(base)/v1/_sandbox/reset" -H "authorization: Bearer $SEED_KEY" >/dev/null \
+    || die "Sıfırlanamadı — MimMock çalışıyor mu? ('./scripts/mimmock status')"
+  ok "Sıfırlandı. Kiracı anahtarı: $SEED_KEY"
+}
+
+cmd_backup() {
+  need_docker
+  local out="${1:-mimmock-backup-$(date +%Y%m%d-%H%M%S)}"
+  if uses_pg; then
+    out="${out%.sql}.sql"
+    docker exec "$DB_CONTAINER" pg_dump -U mimmock mimmock > "$out"
+  else
+    out="${out%.db}.db"
+    # Çalışan veritabanının TUTARLI kopyası: SQLite yedekleme API'si (WAL güvenli).
+    docker exec "$CONTAINER" node -e \
+      "require('better-sqlite3')('/data/mimmock.db',{readonly:true}).backup('/data/.backup.db').then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1)})"
+    docker cp "$CONTAINER:/data/.backup.db" "$out"
+    docker exec "$CONTAINER" rm -f /data/.backup.db
+  fi
+  ok "Yedek: $out ($(du -h "$out" | cut -f1))"
+}
+
+cmd_restore() {
+  need_docker
+  local file="${1:-}"
+  [ -n "$file" ] && [ -f "$file" ] || die "restore <yedek-dosyası>"
+  confirm "Mevcut veri '$file' ile DEĞİŞTİRİLECEK. Devam?"
+  if uses_pg; then
+    docker exec -i "$DB_CONTAINER" psql -U mimmock -d mimmock -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' >/dev/null
+    docker exec -i "$DB_CONTAINER" psql -U mimmock -d mimmock < "$file" >/dev/null
+    compose restart mimmock
+  else
+    compose stop mimmock
+    compose run --rm --no-deps --user root -v "$(cd "$(dirname "$file")" && pwd)/$(basename "$file"):/restore.db:ro" \
+      --entrypoint sh mimmock -c 'cp /restore.db /data/mimmock.db && rm -f /data/mimmock.db-wal /data/mimmock.db-shm && chown node:node /data/mimmock.db'
+    compose start mimmock
+  fi
+  ok "Geri yüklendi."
+}
+
+cmd_destroy() {
+  confirm "Container ve BÜTÜN veri birimleri silinecek. Geri alınamaz. Devam?"
+  need_docker
+  compose down -v
+  ok "Silindi."
+}
+
+cmd_update() {
+  need_docker
+  if [ -d .git ]; then
+    step "Kaynak güncelleniyor"
+    git pull --ff-only
+  fi
+  cmd_up "$@"
+}
+
+cmd_help() {
+  cat <<EOF
+${B}mimmock${Z} — MimMock yerel sandbox yardımcısı
+
+  ${B}Kurulum${Z}
+    init                .env'i oluştur (mimkit adresini ve anahtarını sorar)
+    doctor              ön koşulları denetle (Docker, port, mimkit erişimi + anahtar)
+    up [--pg] [--offline] [--build]
+                        imajı çek ve başlat; hazır olunca adresleri yaz
+                        --build    imajı yayımlanmış sürüm yerine kaynaktan derle
+                        --pg       dış PostgreSQL ile (ekip ortak sandbox'ı)
+                        --offline  mimkit'siz başlat (belge gönderme kapalı;
+                                   .env'e kalıcı yazılır)
+    update              git pull + yeni imajı çek + başlat
+
+  ${B}Günlük işletim${Z}
+    status              container durumu ve /healthz
+    info                adresler ve kimlik bilgisi
+    logs [-f]           günlük (varsayılan son 100 satır)
+    open [panel|docs|llms]
+    restart | down
+
+  ${B}Veri${Z}
+    reset               bütün veriyi sil, tohumu yeniden yaz (onay ister)
+    backup [dosya]      tutarlı yedek (SQLite: .db, PostgreSQL: .sql)
+    restore <dosya>     yedekten geri yükle (onay ister)
+    destroy             container + birimleri sil (onay ister)
+
+  Etkileşimsiz onay: MIMMOCK_YES=1 ./scripts/mimmock reset
+EOF
+}
+
+main() {
+  local cmd="${1:-help}"; [ $# -gt 0 ] && shift
+  case "$cmd" in
+    init) cmd_init ;;
+    doctor) cmd_doctor ;;
+    up|start) cmd_up "$@" ;;
+    down|stop) cmd_down ;;
+    restart) cmd_restart ;;
+    status|ps) cmd_status ;;
+    info) cmd_info ;;
+    logs) cmd_logs "$@" ;;
+    open) cmd_open "$@" ;;
+    reset) cmd_reset ;;
+    backup) cmd_backup "$@" ;;
+    restore) cmd_restore "$@" ;;
+    destroy) cmd_destroy ;;
+    update) cmd_update "$@" ;;
+    help|-h|--help) cmd_help ;;
+    *) err "Bilinmeyen komut: $cmd"; echo; cmd_help; exit 1 ;;
+  esac
+}
+
+main "$@"

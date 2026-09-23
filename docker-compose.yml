@@ -1,0 +1,32 @@
+# MimMock — yerel sandbox.
+#
+#   ./scripts/mimmock up          ← önerilen: denetler, imajı çeker, hazır olunca adresleri yazar
+#   docker compose pull && docker compose up -d   ← aynısı, yardımcısız
+#   docker compose up -d --build                  ← imajı kaynaktan derle
+#
+# Varsayılan: gömülü SQLite, veri `mimmock-data` biriminde kalıcı.
+# Ekip ortak sandbox'ı için dış PostgreSQL: docker-compose.pg.yml
+services:
+  mimmock:
+    # Varsayılan: yayımlanmış imaj. `--build` verilirse bu depodan derlenir.
+    image: ghcr.io/mimarge/mimmock:${MIMMOCK_VERSION:-latest}
+    build: .
+    container_name: mimmock
+    ports:
+      - "${MIMMOCK_HOST_PORT:-8088}:8088"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      MIMMOCK_PORT: "8088"
+      MIMMOCK_DATA_DIR: /data
+    # Container içinden ana makinedeki webhook alıcınıza `host.docker.internal`
+    # ile ulaşılır. Linux'ta bu ad ancak bu satırla vardır.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - mimmock-data:/data
+    restart: unless-stopped
+
+volumes:
+  mimmock-data:
