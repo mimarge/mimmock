@@ -4,6 +4,10 @@
     "title": "MimMock API",
     "version": "1",
     "summary": "MimForge e-Fatura altyapısının BUGÜNKÜ davranışının yerel simülatörü.",
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    },
     "description": "MimMock, bir muhasebe/ERP yazılımının e-Fatura entegrasyonunu **gerçek GİB'e dokunmadan** geliştirebilmesi için makinesinde çalışan bir sandbox'tır. Gerçek UBL-TR üretir, canlı şematrondan geçirir, test sertifikasıyla imzalar ve belgeyi MimForge'dan ÖLÇÜLMÜŞ durum makinesinde yürütür.\n\n**Bu yüzey geçicidir.** Üretim API'si ayrı duyurulacak ve farklı olabilir; entegrasyonunuzla bu API arasına ince bir adaptör katmanı koyun.\n\n### Kimlik\n`Authorization: Bearer <kiracı anahtarı>` + `X-Company: <VKN>`. Tohum anahtar: `mimmock_dev_key` (şirketler `1111111111` gönderici, `2222222222` alıcı).\n\n### LLM / yapay zekâ ajanları\nBu API ile entegrasyon yazan bir model iseniz önce **`/llms-full.txt`** belgesini okuyun: durum makinesi, geçiş tablosu, hata kataloğu, webhook doğrulama kodu ve sık yapılan hatalar oradadır."
   },
   "servers": [

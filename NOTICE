@@ -1,0 +1,12 @@
+MimMock
+Copyright 2026 Mimsoft Arge Arşivleme Teknolojileri
+
+Bu ürün Apache License, Version 2.0 ile lisanslanmıştır (bkz. LICENSE).
+
+Markalar: Bu lisans "Mimsoft", "Mimarge", "MimForge", "mimkit" ve MimMock adlarını,
+logolarını ya da ürün adlarını kullanma hakkı VERMEZ (Apache License 2.0, madde 6).
+Bu adlar yalnız eserin kaynağını tarif etmek için kullanılabilir.
+
+MimMock, MimForge'un bugünkü davranışının bir simülatörüdür; MimForge'un üretim
+API'sinin şartnamesi değildir ve ona ait kod içermez. Gerçek GİB'e hiçbir şey
+göndermez. İmzalar kendinden imzalı bir TEST sertifikasıyladır.

@@ -52,13 +52,11 @@ ve paket ayarlarından yapıldı.
 
 ## 3. Açık kalanlar (kullanıcı kararı)
 
-- **Lisans yok.** Depoda lisans dosyası bulunmuyor; OpenAPI belgesine yanlışlıkla
-  yazılmış bir "MIT" iddiası yayından önce kaldırıldı. Lisanssız public depo "bütün
-  hakları saklı" demektir: geliştirici imajı çalıştırabilir, kodu yeniden kullanma
-  hakkı belirsizdir.
+- ~~Lisans yok.~~ ✅ **Apache-2.0** eklendi (sürüm 0.1.1). Yayından önce OpenAPI'deki
+  kararsız bir "MIT" iddiası kaldırılmıştı; lisans artık kullanıcı kararıyla konuldu.
 - **CI'da canlı mimkit ölçümü koşmuyor.** `fidelity` işi `vars.MIMMOCK_MIMKIT_URL`
-  ve `secrets.MIMMOCK_MIMKIT_TOKEN` tanımlanınca koşar; ikisi de GitHub'a
-  girilmedi (dış servise gizli değer koymak ayrı bir karar).
+  ve `secrets.MIMMOCK_MIMKIT_TOKEN` tanımlanınca koşar. Kullanıcı kararı: şimdilik
+  beklesin (`acik-kalanlar.md` §25).
 - **Eski yerel geçmiş** `yedek/eski-gecmis` dalında yalnız yerelde duruyor; uzakta yok.
 - **Organizasyon ayarı:** `mimarge` artık üyelerin public paket yayımlamasına izin
   veriyor (öncesinde yalnız private). İstenirse mimmock yayımlandıktan sonra geri

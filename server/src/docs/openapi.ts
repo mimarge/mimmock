@@ -1172,6 +1172,7 @@ export function buildOpenApiDocument(serverUrl = 'http://localhost:8088'): Recor
       title: 'MimMock API',
       version: '1',
       summary: 'MimForge e-Fatura altyapısının BUGÜNKÜ davranışının yerel simülatörü.',
+      license: { name: 'Apache-2.0', identifier: 'Apache-2.0' },
       description: [
         'MimMock, bir muhasebe/ERP yazılımının e-Fatura entegrasyonunu **gerçek GİB\'e dokunmadan** ',
         'geliştirebilmesi için makinesinde çalışan bir sandbox\'tır. Gerçek UBL-TR üretir, canlı ',

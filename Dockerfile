@@ -35,6 +35,7 @@ LABEL org.opencontainers.image.title="MimMock" \
       org.opencontainers.image.url="https://github.com/mimarge/mimmock" \
       org.opencontainers.image.documentation="https://github.com/mimarge/mimmock#kurulum" \
       org.opencontainers.image.vendor="Mimarge" \
+      org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.version="${VERSION}"
 WORKDIR /app
 ENV NODE_ENV=production \

@@ -156,9 +156,9 @@ gösterir — bu kipte beklenen budur.
 | Etiket | Anlamı |
 |---|---|
 | `latest` | Son sürüm |
-| `0.1.0` · `0.1` | Sabit sürüm — ekip ortak sandbox'ında bunu kullanın |
+| `0.1.1` · `0.1` | Sabit sürüm — ekip ortak sandbox'ında bunu kullanın |
 
-Compose'da sürüm sabitlemek için `.env`'de `MIMMOCK_VERSION=0.1.0`. Yeni sürüm,
+Compose'da sürüm sabitlemek için `.env`'de `MIMMOCK_VERSION=0.1.1`. Yeni sürüm,
 depoda `v*` etiketi atılınca `.github/workflows/release.yml` ile yayımlanır.
 
 ---
@@ -514,3 +514,9 @@ AGENTS.md          bu depoda çalışan kodlama ajanları için
 | M9 | Panel: durum tahtası · olay ekseni · ham istek günlüğü · terim katmanı | ✅ ölçüldü — `docs/m9-olcum.md` |
 | M9b | Belgeler: OpenAPI · `/docs` · LLM kılavuzu · kurulum yardımcısı · tek bağımlılık mimkit | ✅ ölçüldü — `docs/m9b-belgeler-ve-mimkit.md` |
 | M10 | Paketleme · public depo · `ghcr.io/mimarge/mimmock` | ✅ ölçüldü — `docs/m10-olcum.md` |
+
+## Lisans
+
+[Apache License 2.0](./LICENSE) — kullanabilir, değiştirebilir, ticari olarak da
+dağıtabilirsiniz; lisans ve [`NOTICE`](./NOTICE) metnini korumanız yeterli. Lisans
+"Mimsoft", "Mimarge", "MimForge" ve "mimkit" adlarını kullanma hakkı vermez.

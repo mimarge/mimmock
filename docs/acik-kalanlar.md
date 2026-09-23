@@ -173,13 +173,15 @@ söyler.
 
 Sözleşme ve canlı ölçüm: `docs/m2-olcum-kittest-sozlesmesi.md` §1.
 
-## 24. Lisans (M10)
+## 24. Lisans — ✅ KAPANDI (2026-09-23)
 
-Depo public ama lisans dosyası yok. **Kullanıcıya soru:** hangi lisans? (MIT, Apache-2.0
-ya da "yalnız çalıştırma" gibi özel bir şart.) Karar gelene kadar depo "bütün hakları
-saklı"dır.
+Kullanıcı kararı: **Apache-2.0**. Resmî metin `LICENSE`; telif ve marka bildirimi
+`NOTICE` (lisans marka hakkı vermez, madde 6). `package.json`, OpenAPI `info.license`
+ve imaj etiketi (`org.opencontainers.image.licenses`) aynı değeri taşır. Sürüm 0.1.1.
 
 ## 25. CI'da canlı mimkit (M10)
 
 `fidelity` işi için `vars.MIMMOCK_MIMKIT_URL` + `secrets.MIMMOCK_MIMKIT_TOKEN` GitHub'a
-girilmedi. **Kullanıcıya soru:** CI için ayrı, kısıtlı bir mimkit anahtarı verilecek mi?
+girilmedi. **Kullanıcı kararı (2026-09-23): şimdilik beklesin.** Açıldığında: mimkit'te CI'a özel,
+düşük hız sınırlı bir anahtar; ardından `gh variable set MIMMOCK_MIMKIT_URL` ve
+`gh secret set MIMMOCK_MIMKIT_TOKEN` (`-R mimarge/mimmock`). Fork PR'ları sırrı göremez.
