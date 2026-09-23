@@ -1,0 +1,507 @@
+# MimMock — LLM ve kodlama ajanları için tam kılavuz
+
+> Bu belge, MimMock'u kendi uygulamasına entegre edecek bir yapay zekâ ajanının
+> sistemi **baştan sona** anlaması için yazıldı. İnsan geliştirici için de
+> geçerlidir. Tablolar (durumlar, geçişler, senaryolar, hata kodları, uçlar)
+> sunucunun kendi kaynağından **üretilmiştir** — elle kopyalanmadı, eskimez.
+>
+> Makinece okunan sözleşme: `http://localhost:8088/openapi.json` (OpenAPI 3.1).
+> İnsan için etkileşimli referans: `http://localhost:8088/docs`.
+
+---
+
+## 0. Önce şunu bil — 60 saniyelik özet
+
+- **Ne:** MimForge adlı e-Fatura altyapısının **bugünkü** davranışının yerel
+  simülatörü. Gerçek UBL-TR üretir, **canlı** XSD + şematrondan geçirir, test
+  sertifikasıyla imzalar ve belgeyi MimForge'dan **ölçülmüş** bir durum
+  makinesinde yürütür. Gerçek GİB'e hiçbir şey gitmez.
+- **Ne değil:** Üretim API'sinin şartnamesi **değildir**. Yüzey geçicidir.
+  Entegrasyonu MimMock'a doğrudan değil, **ince bir adaptör katmanına** yaz;
+  üretime geçişte yalnız adaptör değişsin.
+- **Asenkron:** Belge gönderimi `202` döner. Teslim saniyeler/dakikalar sonra
+  gelir. Sonucu **webhook** ile al (ya da `GET /v1/documents/{id}` yokla).
+  `202`'yi "gönderildi" diye yorumlama.
+- **Kimlik:** `Authorization: Bearer <kiracı anahtarı>` + `X-Company: <VKN>`.
+  Tohum anahtar `mimmock_dev_key`; tohum şirketler `1111111111` (gönderici) ve
+  `2222222222` (alıcı).
+- **Hata dallanması:** Daima `errorCode` alanına göre dallan. `reason` Türkçe
+  insan metnidir ve değişebilir.
+- **Zaman:** Sandbox'ın bir **sanal saati** var. 15 günlük bir bekleyişi bir
+  saniyede atlatabilirsin (`POST /v1/_sandbox/clock`). Testlerini buna göre yaz.
+
+---
+
+## 1. Kolay yanlış kurulan beş şey
+
+Bunlar gerçek entegrasyonlarda tekrar tekrar görülen hatalardır. Kodun bunlardan
+birini varsayıyorsa yanlıştır.
+
+1. **Teslim anı `1220`'dir, `1300` değil.** `1220` birincil teslim kodudur
+   (belge alıcıya ulaştı, `deliveredAt` burada yazılır). `1300` zarf
+   kapanışıdır ve 7–14 gün sonra gelebilir; yalnız `1220` hiç görülmediyse
+   teslim sayılır. `1300`'ü bekleyen kod teslimi haftalarca geciktirir.
+2. **Teslim geri alınabilir.** `DELIVERED` bir belgeye sonradan `1230` gelirse
+   belge `SEND_FAILED` olur, `deliveredAt` **temizlenir** ve
+   `DOCUMENT_DELIVERY_REVOKED` alarmı üretilir. `DELIVERED`'ı son durum sanma.
+3. **Belge düzleminde `FAILED` diye bir durum YOKTUR.** Süre dolması (ör. GİB
+   15 gün yanıt vermezse) belgeyi **askıda** bırakır ve bir alarm üretir
+   (`POLL_DEADLINE`); belge hataya düşmez. Kodunda "zaman aşımı → FAILED"
+   dalı kurma. Ayrıca şu değerler **hiç üretilmez**: `SENT`, `FAILED`,
+   `SENT_TO_RECEIVER`, `RETURNED`.
+4. **Gelen belge İKİ adımlıdır.** Önce `RECEIVED` (zarf alındı), sonra sistem
+   yanıtı (S_APR) teyitlenince `DELIVERED`. Ticari yanıt (kabul/ret) ancak
+   `DELIVERED`'dan sonra verilebilir; öncesinde `DOCUMENT_NOT_SETTLED` (409)
+   alırsın. Yanıt vermeden önce gelen belgenin `replyable` alanını oku.
+5. **`SEND_FAILED` terminal değildir — ama her hatadan aynı yoldan çıkılmaz.**
+   `POST /v1/documents/{id}/resend` son ham GİB koduna bakar: **A** sınıfı
+   yeniden gönderilir; **B** (`NEEDS_RESIGN`, 409) belgeyi düzeltip aynı ETTN
+   ile yeniden POST etmeni ister — zarfı aynen tekrar göndermek aynı reddi
+   üretir; **C** (`NOT_RESENDABLE_GIB`) asla/bekle demektir. Sınıf tablosu §7'de.
+   Örneğin `1150` B sınıfıdır: "hata oldu, tekrar dene" döngüsü onu çözmez.
+
+---
+
+## 2. Çalıştırma
+
+MimMock tek bir container'dır: tek port (`8088`), tek süreç.
+
+```bash
+docker run -d --name mimmock -p 8088:8088 \
+  -e MIMMOCK_MIMKIT_URL=<mimkit adresi> -e MIMMOCK_MIMKIT_TOKEN=<anahtar> \
+  --add-host host.docker.internal:host-gateway -v mimmock-data:/data \
+  ghcr.io/mimarge/mimmock:latest
+```
+
+Kaynak: https://github.com/mimarge/mimmock
+
+| Yol | İçerik |
+|---|---|
+| `http://localhost:8088/` | Panel (durum tahtası) — insan için |
+| `http://localhost:8088/docs` | Etkileşimli API referansı (Scalar, OpenAPI 3.1) |
+| `http://localhost:8088/openapi.json` | Makinece okunan sözleşme — istemci üretimi için |
+| `http://localhost:8088/llms.txt` | Bu belgenin kısa dizini |
+| `http://localhost:8088/llms-full.txt` | Bu belge |
+| `http://localhost:8088/healthz` | Sağlık. mimkit hazır değilse `503 degraded` |
+
+Kurulum, ortam değişkenleri ve günlük işletim: depodaki `README.md` →
+"Kurulum" ve "İşletim" bölümleri.
+
+**Tek bağımlılık: mimkit.** MimMock belgeyi kendisi doğrulamaz; XSD + şematron
+doğrulaması, seri numaralama ve HTML/PDF görüntü **canlı** mimkit'ten gelir
+(`MIMMOCK_MIMKIT_URL` + `MIMMOCK_MIMKIT_TOKEN`). mimkit'e ulaşamazsa ya da anahtar
+reddedilirse container **kalkmaz** — sahte bir doğrulayıcıyla "geçti" demek,
+üretimde reddedilecek belgeyi kabul ediyormuş gibi gösterirdi. mimkit anahtarı
+için (adres ve anahtar) **bilgi@mimsoft.com.tr** adresine e-posta gönderin.
+`MIMMOCK_ALLOW_OFFLINE=1` ile mimkit'siz kalkar; belge alma uçları
+`503 OFFLINE_MODE` döner.
+
+**Container ağından ana makineye:** Webhook adresin ana makinende çalışıyorsa
+`localhost` değil `http://host.docker.internal:<port>/...` kullan (container
+içinde `localhost` container'ın kendisidir).
+
+---
+
+## 3. Veri modeli
+
+- **Kiracı (tenant):** Muhasebe/ERP yazılımının kendisi. API anahtarı kiracıya
+  aittir.
+- **Şirket (company):** O yazılımın müşterisi olan mükellef; VKN (10 hane) ya
+  da TCKN (11 hane) ile tanımlanır. Her istekte `X-Company` ile seçilir.
+  Mock'ta "e-Fatura sicili" = bu kiracıda tanımlı ve `eInvoiceRegistered: true`
+  şirketlerdir.
+- **Belge (document):** `id` (`doc_…`, mock kimliği — uçlar bunu alır) ve
+  `ettn` (UUID, GİB tekil numarası) taşır. ETTN **yön ile birlikte** tekildir:
+  A'dan B'ye giden bir fatura, A'nın GİDEN ve B'nin GELEN listesinde aynı
+  ETTN ile durur.
+- **İki eksen:** `status` belgenin iletim durumudur; `replyStatus` ticari yanıt
+  eksenidir. Birbirinden bağımsız yürürler.
+
+### Belge durumları
+
+| Durum | Anlam | Mock üretiyor mu |
+|---|---|---|
+| `RECEIVED` | GİDEN: imzası geçerli belge alındı. GELEN: zarf alındı, S_APR teyidi BEKLENİYOR. Gelen belgede bu ilk adımdır; ticari yanıt ancak DELIVERED'dan sonra verilebilir. | evet |
+| `AWAITING_SIGNATURE` | İmza bekliyor. JSON ve imzasız UBL yolunun ilk durumu. | evet |
+| `AWAITING_NUMBERING` | Seri numarası bekliyor (numarasız belge). İptal yalnız buradan mümkündür. Mock numarayı alım sırasında satır içinde aldığı için bu durum kalıcı YAZILMAZ (ingest.ts: imzalı → RECEIVED, değilse → AWAITING_SIGNATURE). | **hayır** — tanı ama sandbox'ta göremezsin |
+| `PROCESSING` | İmzalı; zarf gönderimine hazır ya da gönderiliyor. | evet |
+| `SENT_TO_GIB` | Zarf GİB'e ulaştı. Teslim DEĞİL — ara eşik. | evet |
+| `DELIVERED` | Teslim edildi. Çıpa 1220'dir. 1300 yalnız 1220 hiç görülmediyse yedek yoldur ve 7–14 gün sonra gelebilir. Sonradan 1230 gelirse teslim GERİ ALINIR (SEND_FAILED). | evet |
+| `SEND_FAILED` | Terminal hata kodu geldi ya da teslim geri alındı. Terminal DEĞİL — resend yolu açık. | evet |
+| `REPORTED` | e-Arşiv raporuna girdi / zarf kapandı. e-Arşiv rapor dilimi v2'ye ertelendi (plan K2); mock bu durumu üretmiyor. | **hayır** — tanı ama sandbox'ta göremezsin |
+| `CANCELLED` | İptal edildi (raporsuz-lokal, yalnız giden). Geçiş tabloda var (G16) ama iptali tetikleyen bir uç henüz yok. | **hayır** — tanı ama sandbox'ta göremezsin |
+
+### Yanıt durumları (`replyStatus`)
+
+| Durum | Anlam | Mock üretiyor mu |
+|---|---|---|
+| `NONE` | Yanıt ekseni yok (ticari olmayan belge). | evet |
+| `AWAITING` | Ticari yanıt bekleniyor (TICARIFATURA, 8 gün). | evet |
+| `REPLY_IN_PROGRESS` | Ticari yanıt zarfı yolda. | evet |
+| `ACCEPTED` | Kabul edildi (yanıt zarfı 1300 ile kapandı). | evet |
+| `REJECTED` | Reddedildi (gerekçe zorunlu). | evet |
+| `PARTIAL` | Kısmi kabul. | **hayır** — tanı ama sandbox'ta göremezsin |
+| `RETURNED` | Rezerve — MimForge'da da yazıcısı yok. | **hayır** — tanı ama sandbox'ta göremezsin |
+| `DEEMED_ACCEPTED` | Süre geçti, zımnen kabul sayıldı. | **hayır** — tanı ama sandbox'ta göremezsin |
+
+---
+
+## 4. Durum makinesi
+
+Geçişler kodda değil, **veri** olarak durur (`server/src/engine/transitions.ts`)
+ve her satır MimForge'daki ölçüldüğü `dosya:satır`'a atıf yapar. Olay geçmişinde
+(`GET /v1/documents/{id}/history`) gördüğün `ruleId` bu tablonun kimliğidir.
+
+**Kurallar sırayla denenir** — sıra anlamlıdır (ör. `G12` `G11`'den önce: `1230` `DELIVERED`'dan gelirse teslimi geri alır).
+
+| Kural | Nereden | Olay | Ham GİB kodu | Nereye | Etki | Not | MimForge kaynağı |
+|---|---|---|---|---|---|---|---|
+| `G5` | RECEIVED | sign | — | PROCESSING | — | İmza zaten geçerli; persist sonrası gönderime hazır. | `mimforge:services/worker/src/activities.ts:256-257` |
+| `G6` | AWAITING_SIGNATURE | sign | — | PROCESSING | — | ÖE mührü + self-verify + post-imza şematron. | `mimforge:services/worker/src/activities.ts:259-262` |
+| `G7` | PROCESSING | submit | — | SENT_TO_GIB | — | submitEnvelope başarı (SOAP POST kabul) — ham kod YOK. | `mimforge:services/worker/src/send-invoice-activities.ts:944-946` |
+| `G8` | PROCESSING | poll | 1200 | SENT_TO_GIB | — | 1200 ara eşik — bitiş DEĞİL. | `mimforge:services/worker/src/send-invoice-activities.ts:1115-1120` |
+| `G12` | DELIVERED | poll | 1230 | SEND_FAILED | deliveredAt TEMİZLENİR · alarm: DOCUMENT_DELIVERY_REVOKED | 🔑 GERİ ALINABİLİR TESLİM — yalnız DELIVERED'dan. | `mimforge:services/worker/src/send-invoice-activities.ts:254-262` |
+| `G9` | PROCESSING, SENT_TO_GIB | poll | 1220 | DELIVERED | deliveredAt yazılır | 🔑 BİRİNCİL teslim çıpası. Müşteri-görünen teslim anı; TTK 8-gün buradan işler. | `mimforge:services/worker/src/send-invoice-activities.ts:1130-1133` |
+| `G10` | PROCESSING, SENT_TO_GIB | poll | 1300 | DELIVERED | deliveredAt yazılır | 1300 zarf kapanışı — belge teslimi için yalnız FALLBACK (1220 hiç görülmediyse). | `mimforge:services/worker/src/send-invoice-activities.ts:1069-1072` |
+| `G11` | PROCESSING, SENT_TO_GIB | poll | 1110–1195, 1215, 1230, 1235 (terminal-fail kümesi) | SEND_FAILED | — | Terminal-fail; resend yolu AÇIK (terminal DEĞİL). | `mimforge:services/worker/src/send-invoice-activities.ts:265-268` |
+| `G15` | SEND_FAILED | resend | — | PROCESSING | — | attempt+1, yeni zarf-UUID. | `mimforge:services/api/src/routes.send.ts:81` |
+| `G16` | AWAITING_NUMBERING | cancel | — | CANCELLED | — | Raporsuz-lokal iptal; yalnız OUTBOUND. | `mimforge:services/api/src/routes.earsiv.ts:621-637` |
+| `L10` | RECEIVED | sr_send | — | RECEIVED | — | S_APR (SYSTEMENVELOPE) GİB'e gönderildi; teyit AYRI adımdır. | `mimforge:services/worker/src/system-response-activities.ts` |
+| `L11` | RECEIVED | sr_confirm | 1200 veya 1300 | DELIVERED | deliveredAt yazılır | 🔑 İKİNCİ ADIM: verdiğimiz S_APR GİB'de teyitlendi → alım resmen kapandı. | `mimforge:services/worker/src/system-response-activities.ts:122-136` |
+
+**Yanıt ekseni** (`replyStatus`; belge `status`'u değişmez):
+
+| Kural | Nereden (replyStatus) | Olay | Ham GİB kodu | Nereye | Not |
+|---|---|---|---|---|---|
+| `Y1` | AWAITING | reply_open | — | REPLY_IN_PROGRESS | CAS AWAITING; ayrıca belge DELIVERED olmalı (DOCUMENT_NOT_SETTLED kapısı). |
+| `Y2/Y3` | REPLY_IN_PROGRESS, AWAITING | reply_settle | 1300 | ACCEPTED / REJECTED (karar yanıt açılırken saklanır) | Yanıt zarfı 1300 ile kapandı; ret gerekçesi aynı tx'te yazılır. |
+
+Yazımlar karşılaştır-ve-yaz (CAS) kilidiyle yapılır: "durum hâlâ okuduğum
+durumsa yaz". Geç gelen bir kod `DELIVERED`'ı ezemez; eşleşmeyen olay sessizce
+hiçbir şey yapmaz (MimForge da öyle davranır).
+
+### Tipik akışlar
+
+```
+GİDEN (happy)
+  202 kabul → AWAITING_SIGNATURE ──sign──▶ PROCESSING ──submit──▶ SENT_TO_GIB
+            ──1200──▶ (ara eşik, durum aynı)
+            ──1220──▶ DELIVERED  ◀── teslim anı, deliveredAt yazılır
+            ──1300──▶ (zarf kapandı, durum DELIVERED kalır, rawGibCode=1300)
+
+GİDEN (receiver_reject)
+  … ──1220──▶ DELIVERED ──1230──▶ SEND_FAILED   (teslim GERİ ALINDI, alarm)
+
+GİDEN (gib_stalled)
+  … ──1210──▶ SENT_TO_GIB … 15 gün … POLL_DEADLINE alarmı → AÇIK kalır (hata değil)
+
+GELEN
+  RECEIVED ──S_APR gönderildi──▶ RECEIVED ──S_APR teyit (1200|1300)──▶ DELIVERED
+  (ancak şimdi) ticari yanıt: AWAITING ──reply──▶ REPLY_IN_PROGRESS ──1300──▶ ACCEPTED|REJECTED
+```
+
+---
+
+## 5. Senaryolar
+
+Her belge bir senaryoyla yürür. Giden belgede `X-Scenario` başlığıyla (ya da
+JSON gövdesinde `scenario`) seçilir; verilmezse `happy`. Gelen ve yanıt
+senaryolarını motor otomatik bağlar. Gecikmeler **sanal** saatle işler ve
+birikimlidir: bir adımın vadesi, önceki adımın vadesinin üstüne eklenir — saati
+ileri atlatınca vadesi gelen bütün adımlar sırayla ateşlenir.
+
+| Senaryo | X-Scenario ile seçilir | Ne öğretir | Adımlar (sanal saat, birikimli) | Sonu |
+|---|---|---|---|---|
+| `happy` | evet | Varsayılan akış: imza → gönderim → 1200 → 1220 teslim → 1300 zarf kapanışı. | +2 sn sign → +3 sn submit → +5 sn poll 1200 → +10 sn poll 1220 → +10 sn poll 1300 | kapanır |
+| `receiver_reject` | evet | Teslim sonrası ret — 🔑 1230 GERİ ALINABİLİR TESLİM yolundan. DELIVERED → SEND_FAILED, deliveredAt NULL'a düşer, DOCUMENT_DELIVERY_REVOKED alarmı. | +2 sn sign → +3 sn submit → +5 sn poll 1200 → +10 sn poll 1220 → +10 sn poll 1230 | kapanır |
+| `gib_stalled` | evet | 🔴 Belge ASILI KALIR + alarm. MimForge 15 günlük poll deadline'ında belgeyi KAPATMAZ (send-invoice-workflow.ts:222-227). Sanal saatle 15 gün bir saniyede atlanır. | +2 sn sign → +3 sn submit → +5 sn poll 1200 → +10 sn poll 1210 → +15 gün poll 1210 ⚠ POLL_DEADLINE | **AÇIK** kalır (hata değil) |
+| `gib_error` | evet | Terminal-hata (1150 şematron reddi) → SEND_FAILED. Resend yolu AÇIK; SEND_FAILED terminal DEĞİLDİR. | +2 sn sign → +3 sn submit → +5 sn poll 1200 → +10 sn poll 1150 | **AÇIK** kalır (hata değil) |
+| `inbound_happy` | hayır (otomatik) | 🔑 İKİ ADIMLI gelen belge: RECEIVED → S_APR gönderilir → GİB teyitler (1200) → DELIVERED. Teyit gelmeden belge YANITLANAMAZ (DOCUMENT_NOT_SETTLED). | +2 sn sr_send → +5 sn sr_confirm 1200 | kapanır |
+| `inbound_sr_stalled` | hayır (otomatik) | 🔴 S_APR teyidi GELMEZ → belge RECEIVED'da ASILI kalır ve yanıtlanamaz (sözlük §5/H8). Gerçek hayatta olan budur; mock uydurma bir terminal durum eklemez. | +2 sn sr_send | **AÇIK** kalır (hata değil) |
+| `slow` | evet | happy ile aynı yol, tüm gecikmeler ×10. Zaman kumandasını denemek için. | +20 sn sign → +30 sn submit → +50 sn poll 1200 → +2 dk poll 1220 → +2 dk poll 1300 | kapanır |
+| `reply_flow` | hayır (otomatik) | Ticari yanıt zarfı: REPLY_IN_PROGRESS → 1300 → ACCEPTED/REJECTED. | +5 sn reply_settle 1300 | kapanır |
+
+---
+
+## 6. Webhook
+
+Olaylar: `document.status_changed`, `document.delivered`, `document.rejected`, `inbox.received`, `report.status_changed`.
+
+- **Teslim EN AZ BİR KEZ:** aynı olay birden fazla gelebilir. Tüketici
+  idempotent olmalı — `X-MimMock-Delivery` kimliğiyle tekrarları ayıkla.
+- **Sıra garanti DEĞİL:** aynı belge için gelen olaylarda `documentVersion`
+  küçük olanı yok say. `sequence` kiracı içinde monotondur.
+- **Yeniden deneme:** 2xx dışı her yanıt ya da zaman aşımı yeniden denenir:
+  2 sn → 5 sn → 15 sn → 1 dk → 5 dk, ardından **ölü mektup**. Ölü mektup elle yeniden gönderilebilir
+  (`POST /v1/webhooks/{id}/replay`).
+- **İmza:** `X-MimMock-Signature: v1=<hex>`, burada
+  `hex = HMAC-SHA256(secret, X-MimMock-Timestamp + "." + ham_gövde)`.
+  Damga Unix milisaniye ve **gerçek** saattir (sanal saat ileri atlasa bile);
+  ±5 dakika dışını reddet. **Ham gövdeyi** imzala — JSON'u ayrıştırıp yeniden
+  serileştirirsen imza tutmaz. Karşılaştırmayı sabit zamanlı yap.
+
+```js
+// Node — Express örneği. Gövde HAM okunmalı: express.raw({ type: 'application/json' })
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+export function verifyMimMock(req, secret, toleranceMs = 5 * 60 * 1000) {
+  const signature = req.get('x-mimmock-signature') ?? '';
+  const timestamp = req.get('x-mimmock-timestamp') ?? '';
+  const body = req.body.toString('utf8'); // Buffer, ham
+  if (Math.abs(Date.now() - Number(timestamp)) > toleranceMs) return false;
+  const expected = 'v1=' + createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
+  const a = Buffer.from(signature), b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+```
+
+```python
+# Python
+import hmac, hashlib, time
+
+def verify_mimmock(headers, raw_body: bytes, secret: str, tolerance_ms=5 * 60 * 1000) -> bool:
+    ts = headers.get("x-mimmock-timestamp", "")
+    sig = headers.get("x-mimmock-signature", "")
+    if abs(time.time() * 1000 - int(ts or 0)) > tolerance_ms:
+        return False
+    mac = hmac.new(secret.encode(), f"{ts}.".encode() + raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(sig, "v1=" + mac)
+```
+
+Bağımsız doğrulayıcı betik (hiçbir mock kodu import etmez):
+`scripts/verify-webhook-signature.mjs`.
+
+Kendi sunucunu kurmadan denemek için: mock'un **tohum alıcısı** kendi
+webhook'unu yutar ve imzayı gerçekten doğrular —
+`GET /v1/_sandbox/webhook-sink`.
+
+---
+
+## 7. Hata sözleşmesi
+
+Gövde her zaman:
+
+```json
+{ "errorCode": "DOCUMENT_NOT_SETTLED", "reason": "Türkçe açıklama", "errors": [{ "field": "…", "reason": "…" }] }
+```
+
+`errors` yalnız alan düzeyinde hatalarda vardır. `source` sütunu kodun
+MimForge'da ölçüldüğü yeri gösterir; `mimmock` = mock'a özgü.
+
+| errorCode | HTTP | Anlam | Kaynak |
+|---|---|---|---|
+| `BRANCH_REQUIRED` | 400 | Şube belirsiz: geçerli bir X-Company başlığı gerekli. | `mimforge:services/api/src/routes.documents.ts:320` |
+| `CONTEXT` | 404 | Bağlam varlığı yok: X-Company ile verilen mükellef bu kiracıda tanımlı değil. | `mimforge:services/api/src/routes.documents.ts:323` |
+| `FORBIDDEN` | 403 | Bağlam yetki ihlali. | `mimforge:services/api/src/routes.documents.ts:315` |
+| `INVALID_VKN` | 400 | VKN/TCKN uzunluğu geçersiz — 10 (VKN) veya 11 (TCKN) hane olmalı. | `mimforge:services/api/src/routes.reply.ts:204` |
+| `MISSING_API_KEY` | 401 | Authorization başlığı yok ya da Bearer biçiminde değil. | `mimmock` |
+| `INVALID_API_KEY` | 401 | API anahtarı tanınmadı. | `mimmock` |
+| `TENANT_AMBIGUOUS` | 400 | Panel kimliğiyle birden çok kiracı görünüyor; X-Tenant başlığıyla seçin. | `mimmock` |
+| `COMPANY_NOT_FOUND` | 404 | Şirket bulunamadı. | `mimmock` |
+| `COMPANY_EXISTS` | 409 | Bu VKN/TCKN bu kiracıda zaten tanımlı. | `mimmock` |
+| `VALIDATION_FAILED` | 400 | İstek gövdesi geçersiz. | `mimmock` |
+| `UNKNOWN_PROFILE` | 400 | Tanınmayan ProfileID değeri. | `mimmock` |
+| `NOT_FOUND` | 404 | Böyle bir uç yok. | `mimmock` |
+| `INTERNAL` | 500 | Beklenmeyen iç hata. | `mimmock` |
+| `MALFORMED_XML` | 400 | Gövde geçerli bir UBL belgesi değil. | `mimforge:services/api/src/routes.documents.ts:356` |
+| `UNSUPPORTED_TYPE` | 400 | Bu belge tipi bu fazda desteklenmiyor. | `mimforge:services/api/src/routes.documents.ts:383` |
+| `SERIES_PREFIX_NOT_APPLICABLE` | 400 | Numaralı belgede seri öneki gönderilemez. | `mimforge:services/api/src/routes.documents.ts:421` |
+| `DOCNO_FORMAT` | 400 | Belge-no formatı geçersiz (3 alfanümerik önek + yıl + 9 hane bekleniyor). | `mimforge:services/api/src/routes.documents.ts:454` |
+| `DOCNO_YEAR_MISMATCH` | 400 | Belge-no seri yılı, belge tarihinin yılıyla uyumsuz. | `mimforge:services/api/src/routes.documents.ts:467` |
+| `MULTIPLE_TAX_TOTALS` | 400 | Fatura kökünde birden çok TaxTotal var. | `mimforge:services/api/src/routes.documents.ts:488` |
+| `DUPLICATE_UUID` | 409 | Bu ETTN zaten gönderildi. | `mimforge:services/api/src/routes.documents.ts:528` |
+| `DUPLICATE_DOCNO` | 409 | Bu belge-no zaten kullanıldı. | `mimforge:services/api/src/routes.documents.ts:553` |
+| `VALIDATOR_UNAVAILABLE` | 503 | mimkit doğrulaması şu an yanıt vermiyor (erişilemez, anahtar reddedildi ya da kısıtlandı). | `mimforge:services/api/src/routes.documents.ts:584` |
+| `SCHEMA_INVALID` | 400 | Belge XSD/şematron doğrulamasından geçemedi. | `mimforge:services/api/src/routes.documents.ts:817` |
+| `TYPE_UNMAPPED` | 400 | UBL kökü/ProfileID değerinden belge tipi türetilemedi. | `mimforge:services/api/src/routes.documents.ts:141` |
+| `TYPE_MISMATCH` | 400 | Beyan edilen belge tipi, belgeden çıkarılanla uyuşmuyor. | `mimforge:services/api/src/routes.documents.ts:161` |
+| `SENDER_MISMATCH` | 400 | Belgedeki gönderici, X-Company ile verilen mükellef değil. | `mimforge:services/api/src/authz.ts:11` |
+| `RECEIVER_NOT_REGISTERED` | 400 | e-Fatura alıcısı belge tarihinde sicilde yok — belge e-Arşiv olmalı. | `mimforge:services/api/src/routes.documents.ts:1148` |
+| `RECEIVER_REGISTERED` | 400 | e-Arşiv alıcısı belge tarihinde sicilde var — belge e-Fatura olmalı. | `mimforge:services/api/src/routes.documents.ts:1160` |
+| `RECEIVER_VKN_MISSING` | 400 | Giden e-Faturada alıcı VKN/TCKN yok. | `mimforge:services/api/src/routes.documents.ts:1237` |
+| `NO_DEFAULT_SERIES` | 409 | Bu mükellef için varsayılan seri tanımlı değil. | `mimforge:services/api/src/ingest-numbering.ts:145` |
+| `NUMBER_REJECTED` | 400 | Numaratör numarayı reddetti. | `mimforge:services/api/src/ingest-numbering.ts:256` |
+| `NUMBERING_UNAVAILABLE` | 503 | Numara defteri erişilemez. | `mimforge:services/api/src/ingest-numbering.ts:265` |
+| `SEND_IN_PROGRESS` | 409 | Belge gönderim hattında; yeniden gönderim yalnız SEND_FAILED durumunda. | `mimforge:services/api/src/routes.send.ts:171` |
+| `ALREADY_DELIVERED` | 409 | Belge teslim edildi; yeniden gönderilemez. | `mimforge:services/api/src/routes.send.ts:176` |
+| `NOT_RESENDABLE` | 409 | Belge durumu yeniden gönderime uygun değil. | `mimforge:services/api/src/routes.send.ts:178` |
+| `NEEDS_RESIGN` | 409 | Son zarfın GİB kodu B sınıfı — zarfı aynen tekrar göndermek aynı reddi üretir. Belgeyi düzeltip aynı ETTN ile YENİDEN gönderin. | `mimforge:services/api/src/routes.send.ts:189` |
+| `NOT_RESENDABLE_GIB` | 409 | Son zarfın GİB kodu C sınıfı (asla/bekle) — yeniden gönderim yolu kapalı. | `mimforge:services/api/src/routes.send.ts:194` |
+| `DOCUMENT_NOT_SETTLED` | 409 | Belge henüz uçtan uca tamamlanmadı: sistem yanıtı (S_APR) GİB'de teyitlenmedi. Belge DELIVERED olmadan ticari yanıt verilemez. | `mimforge:services/api/src/routes.reply.ts:192` |
+| `NOT_COMMERCIAL` | 409 | Yalnız GELEN TICARIFATURA yanıtlanabilir. | `mimforge:services/api/src/routes.reply.ts:189` |
+| `ALREADY_REPLIED` | 409 | Bu belge zaten yanıtlandı. | `mimforge:services/api/src/routes.reply.ts:198` |
+| `REPLY_IN_PROGRESS` | 409 | Yanıt hattı zaten açık. | `mimforge:services/api/src/routes.reply.ts:196` |
+| `REPLY_WINDOW_EXPIRED` | 409 | Yanıt süresi doldu (fatura için 8 gün, TTK md.21). | `mimforge:services/api/src/routes.reply.ts:200` |
+| `EMPTY_REJECT_REASON` | 400 | Ret yanıtı gerekçesiz olamaz. | `mimforge:services/api/src/routes.reply.ts:116` |
+| `TEMPLATE_UNAVAILABLE` | 503 | Görüntü servisi erişilemez. | `mimforge:services/api/src/routes.documents.ts:690` |
+| `TEMPLATE_NOT_FOUND` | 404 | Şablon bulunamadı ya da bu mükellefe ait değil. | `mimforge:services/api/src/routes.documents.ts:677` |
+| `TEMPLATE_REJECTED` | 400 | Görüntü servisi isteği reddetti. | `mimforge:services/api/src/routes.documents.ts:677` |
+| `DOCUMENT_NOT_FOUND` | 404 | Belge bulunamadı. | `mimforge:services/api/src/routes.send.ts:167` |
+| `JSON_BUILD_FAILED` | 400 | JSON gövdesinden UBL üretilemedi. | `mimmock` |
+| `OFFLINE_MODE` | 503 | MimMock çevrimdışı kipte — mimkit olmadan belge alınmaz (plan K4). | `mimmock` |
+
+### Yeniden gönderme sınıfları (`POST /v1/documents/{id}/resend`)
+
+Son ham GİB koduna göre. Tabloda olmayan kod **A gibi** davranır (bilinçli
+fail-open, MimForge'dan ölçüldü).
+
+| Sınıf | Ne yapılır | Ham GİB kodları |
+|---|---|---|
+| **A** | Yeniden gönderilir → `PROCESSING` | 1110, 1111, 1120, 1130, 1131, 1132, 1133, 1141, 1142, 1162, 1170, 1171, 1172, 1175, 1180, 1182, 1183, 1190, 1195, 1215, 1230 |
+| **B** | `409 NEEDS_RESIGN` — belgeyi düzelt, aynı ETTN ile yeniden POST et | 1150, 1160, 1161, 1176, 1177, 1140, 1143, 1181 |
+| **C** | `409 NOT_RESENDABLE_GIB` — asla / bekle | 1163, 1164, 1300, 1235 |
+
+---
+
+## 8. Entegrasyon tarifi (ajan için adım adım)
+
+1. **Adaptör katmanı kur.** Uygulamanın iç modeli (fatura, müşteri) ile MimMock
+   arasına tek bir modül koy: `sendInvoice`, `getStatus`, `handleWebhook`,
+   `replyToInvoice`. Üretime geçişte yalnız bu modül değişir.
+2. **Şirketleri tanımla.** Uygulamandaki her mükellef için
+   `POST /v1/companies`. Alıcı da tanımlıysa teslim edilen fatura onun gelen
+   kutusuna düşer — iki taraflı akışı tek makinede sınayabilirsin.
+3. **Gönder.** `POST /v1/documents` (JSON) ya da `POST /v1/documents/ubl`
+   (hazır UBL). JSON yolunda `id` (belge numarası) ve `uuid` (ETTN) **zorunludur**;
+   her yeni belge için yeni bir UUID üret. Numaranın yılı `datetime` ile tutmalı,
+   tarih gelecekte olamaz. Yanıttaki `id`'yi (`doc_…`) sakla — diğer uçlar onu alır.
+4. **Durumu webhook'la izle.** `POST /v1/webhooks` ile kaydol; imzayı doğrula;
+   `documentVersion` ile eskiyi ele; `deliveredAt` yalnız `1220`'de dolar.
+5. **Hataları `errorCode` ile eşle.** 4xx: girdi hatası, düzelt. `409`: durum
+   kapısı (ör. zaten teslim edildi) — yeniden deneme değil, akış kararı.
+   `503`: mimkit geçici olarak yanıt vermiyor (doğrulama/numaralama/görüntü) — yeniden dene.
+6. **Gelen kutusunu işle.** `inbox.received` webhook'u `RECEIVED` ile gelir;
+   `DELIVERED` olmadan yanıt verme. `replyable.can` doğruysa
+   `POST /v1/inbox/{id}/reply`.
+7. **Kenar durumlarını test et** (aşağıdaki sandbox tarifleriyle).
+
+### Test tarifleri — sandbox uçlarıyla
+
+| Sınamak istediğin | Nasıl |
+|---|---|
+| Normal teslim | `X-Scenario: happy`, sonra `POST /v1/_sandbox/clock {"advanceMs": 60000}` |
+| Teslimin geri alınması (1230) | `X-Scenario: receiver_reject` ya da `DELIVERED` belgeye `POST /v1/_sandbox/documents/{id}/fail {"rawGibCode": 1230}` |
+| Düzeltilmesi gereken GİB hatası (B sınıfı) | `X-Scenario: gib_error` → `SEND_FAILED` (1150) → `POST /v1/documents/{id}/resend` → **409 `NEEDS_RESIGN`**: belgeyi düzelt, aynı ETTN ile yeniden POST et |
+| Yeniden gönderilebilir hata (A sınıfı) | `X-Scenario: receiver_reject` → `SEND_FAILED` (1230) → `resend` → **200**, belge `PROCESSING`'e döner |
+| 15 gün yanıtsızlık | `X-Scenario: gib_stalled`, sonra `POST /v1/_sandbox/clock {"advanceDays": 16}` → belge AÇIK kalır |
+| Gelen belge + yanıt kapısı | `POST /v1/_sandbox/inbox` (ham XML, `X-Company: 2222222222`) → hemen yanıt dene → `DOCUMENT_NOT_SETTLED` |
+| Teyidi hiç gelmeyen gelen belge | aynı uç, `X-Scenario: inbound_sr_stalled` |
+| Tek adım ilerletme | `POST /v1/_sandbox/documents/{id}/advance` |
+| Temiz başlangıç | `POST /v1/_sandbox/reset` (🔴 tüm veriyi siler) |
+
+🔴 `/v1/_sandbox/*` uçları **yalnız mock'ta** vardır ve her yanıt
+`X-MimMock-Sandbox: 1` başlığı taşır. Üretim kodunda bu uçlara bağımlılık kurma;
+yalnız test kodunda kullan.
+
+### Hata ayıklarken
+
+- `GET /v1/_sandbox/requests` — gönderdiğin ham istek ve dönen ham yanıt
+  (gizli başlıklar maskeli). "Anahtarım neden çalışmıyor" sorusunun cevabı
+  burada: kimliği çözülemeyen istekler de kaydedilir.
+- `GET /v1/documents/{id}/history` — belgenin her geçişi, kural kimliğiyle.
+- `GET /v1/webhooks/{id}/deliveries` — her teslim denemesi, HTTP kodu, hata.
+
+---
+
+## 9. İmza ve sertifika
+
+Belgeler XAdES ile imzalanır ama sertifika **kendinden imzalı test
+sertifikasıdır**. İmza yapısı gerçektir (ayrıştırıcın çalışır), **zincir
+doğrulaması kasten başarısız olur** — gerçek mali mühür bir geliştirici
+makinesine konulmaz. `GET /v1/documents/{id}/xml` yanıtı
+`X-MimMock-Document-Signature: test-certificate; self-signed;
+chain-validation-fails-by-design` başlığı taşır; belge gövdesinde
+`signature.chainValid` her zaman `false`'tur. Bunu bir hata sanma.
+
+---
+
+## 10. Başlık özeti
+
+| Başlık | Yön | Anlam |
+|---|---|---|
+| `Authorization: Bearer <anahtar>` | istek | Kiracı kimliği |
+| `X-Company: <VKN>` | istek | İşlemin mükellefi |
+| `X-Scenario: <ad>` | istek | Belgenin senaryosu |
+| `X-Series-Prefix: <önek>` | istek | UBL yolunda numarasız belge için seri |
+| `X-Panel-Token` / `X-Tenant` | istek | Yalnız panel/yönetim için |
+| `X-MimMock-Api: 1` | yanıt | Her yanıtta — bu MimMock API v1'dir, MimForge değil |
+| `X-MimMock-Sandbox: 1` | yanıt | `/v1/_sandbox/*` yanıtlarında |
+| `X-MimMock-Document-Signature` | yanıt | `/xml`: imzanın test sertifikası olduğu |
+| `X-MimMock-Template` | yanıt | `/html`: hangi şablonun çizdiği |
+| `Link` | yanıt | `rel="service-desc"` → OpenAPI, `rel="describedby"` → bu belge |
+
+---
+
+## 11. Uç listesi
+
+Tam şema, örnek gövde ve yanıtlar için `http://localhost:8088/openapi.json`.
+
+### Sistem
+
+Sağlık ve bağımlılıklar.
+
+- `GET /healthz` — Sağlık ve bağımlılık durumu
+- `GET /v1` — API kök dizini — belgelerin adresleri
+
+### Şirketler
+
+Mükellef tanımı. Kiracı anahtarı muhasebe yazılımını, `X-Company` müşterisini seçer.
+
+- `GET /v1/companies` — Kiracının mükelleflerini listele
+- `POST /v1/companies` — Mükellef tanımla
+- `GET /v1/companies/{vkn}` — Tek mükellef
+
+### Belgeler
+
+Giden e-Fatura / e-Arşiv: gönder, izle, yeniden gönder.
+
+- `POST /v1/documents` — Fatura gönder (JSON → UBL)
+- `GET /v1/documents` — Belgeleri listele
+- `POST /v1/documents/ubl` — Ham UBL-TR XML gönder
+- `GET /v1/documents/{id}` — Belge
+- `GET /v1/documents/{id}/history` — Olay geçmişi — belge bu duruma NEDEN geldi
+- `POST /v1/documents/{id}/resend` — SEND_FAILED belgeyi yeniden gönder
+- `GET /v1/documents/{id}/xml` — İmzalı UBL-TR XML
+
+### Görüntü
+
+HTML / PDF — canlı şablon servisinden.
+
+- `GET /v1/documents/{id}/html` — HTML görüntü (canlı şablon)
+- `GET /v1/documents/{id}/pdf` — PDF görüntü (canlı şablon)
+- `GET /v1/templates` — Seçilebilir görüntü şablonları
+
+### Gelen kutusu
+
+Gelen belgeler (İKİ ADIM: RECEIVED → S_APR → DELIVERED) ve ticari yanıt.
+
+- `GET /v1/inbox` — Gelen belgeler
+- `GET /v1/inbox/{id}` — Gelen belge
+- `POST /v1/inbox/{id}/reply` — Ticari kabul / ret
+
+### Webhook
+
+Olay aboneliği, teslim günlüğü, elle yeniden gönderme.
+
+- `GET /v1/webhooks` — Kayıtlı webhook'lar ve yeniden deneme politikası
+- `POST /v1/webhooks` — Webhook kaydet
+- `GET /v1/webhooks/{id}/deliveries` — Teslim günlüğü
+- `POST /v1/webhooks/{id}/replay` — Teslimi elle yeniden gönder (ölü mektuptan da)
+
+### Sandbox
+
+🔴 YALNIZ MOCK'TA. Zaman, arıza, trafik, sıfırlama. Üretim kodunuzda bu uçlara bağımlılık kurmayın.
+
+- `GET /v1/_sandbox/scenarios` — Senaryo kataloğu
+- `GET /v1/_sandbox/clock` — Sanal saati oku
+- `POST /v1/_sandbox/clock` — Sanal saati ilerlet / ayarla / sıfırla
+- `POST /v1/_sandbox/documents/{id}/advance` — Belgeyi bir adım ilerlet
+- `POST /v1/_sandbox/documents/{id}/fail` — Ham GİB kodu enjekte et (arıza/geri alma)
+- `POST /v1/_sandbox/documents/{id}/scenario` — Belgenin senaryosunu değiştir
+- `POST /v1/_sandbox/inbox` — Gelen kutusuna ham XML enjekte et
+- `POST /v1/_sandbox/traffic` — Trafik üret (bir tur)
+- `POST /v1/_sandbox/traffic/reset` — Trafik tohumunu sıfırla (aynı akışı baştan üret)
+- `POST /v1/_sandbox/reset` — TÜM veriyi sil, tohumu yeniden yaz
+- `GET /v1/_sandbox/requests` — Ham istek günlüğü — ne gönderdiniz, ne döndük
+- `GET /v1/_sandbox/webhook-sink` — Tohum webhook alıcısının aldıkları
+- `POST /v1/_sandbox/webhook-sink` — Tohum webhook alıcısı (mock'un kendisi çağırır)

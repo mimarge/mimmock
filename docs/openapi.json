@@ -1,0 +1,4503 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MimMock API",
+    "version": "1",
+    "summary": "MimForge e-Fatura altyapısının BUGÜNKÜ davranışının yerel simülatörü.",
+    "description": "MimMock, bir muhasebe/ERP yazılımının e-Fatura entegrasyonunu **gerçek GİB'e dokunmadan** geliştirebilmesi için makinesinde çalışan bir sandbox'tır. Gerçek UBL-TR üretir, canlı şematrondan geçirir, test sertifikasıyla imzalar ve belgeyi MimForge'dan ÖLÇÜLMÜŞ durum makinesinde yürütür.\n\n**Bu yüzey geçicidir.** Üretim API'si ayrı duyurulacak ve farklı olabilir; entegrasyonunuzla bu API arasına ince bir adaptör katmanı koyun.\n\n### Kimlik\n`Authorization: Bearer <kiracı anahtarı>` + `X-Company: <VKN>`. Tohum anahtar: `mimmock_dev_key` (şirketler `1111111111` gönderici, `2222222222` alıcı).\n\n### LLM / yapay zekâ ajanları\nBu API ile entegrasyon yazan bir model iseniz önce **`/llms-full.txt`** belgesini okuyun: durum makinesi, geçiş tablosu, hata kataloğu, webhook doğrulama kodu ve sık yapılan hatalar oradadır."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8088",
+      "description": "Yerel MimMock"
+    }
+  ],
+  "externalDocs": {
+    "description": "LLM için tam kılavuz",
+    "url": "http://localhost:8088/llms-full.txt"
+  },
+  "tags": [
+    {
+      "name": "Sistem",
+      "description": "Sağlık ve bağımlılıklar."
+    },
+    {
+      "name": "Şirketler",
+      "description": "Mükellef tanımı. Kiracı anahtarı muhasebe yazılımını, `X-Company` müşterisini seçer."
+    },
+    {
+      "name": "Belgeler",
+      "description": "Giden e-Fatura / e-Arşiv: gönder, izle, yeniden gönder."
+    },
+    {
+      "name": "Görüntü",
+      "description": "HTML / PDF — canlı şablon servisinden."
+    },
+    {
+      "name": "Gelen kutusu",
+      "description": "Gelen belgeler (İKİ ADIM: RECEIVED → S_APR → DELIVERED) ve ticari yanıt."
+    },
+    {
+      "name": "Webhook",
+      "description": "Olay aboneliği, teslim günlüğü, elle yeniden gönderme."
+    },
+    {
+      "name": "Sandbox",
+      "description": "🔴 YALNIZ MOCK'TA. Zaman, arıza, trafik, sıfırlama. Üretim kodunuzda bu uçlara bağımlılık kurmayın."
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": [
+          "Sistem"
+        ],
+        "summary": "Sağlık ve bağımlılık durumu",
+        "description": "Kimlik istemez. mimkit erişilemezse ya da anahtar reddedilirse **503 + `degraded`** döner — mock sessizce düşük sadakatte çalışmaz. Container sağlık kontrolü bunu kullanır.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "mimkit hazır değil (degraded)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1": {
+      "get": {
+        "tags": [
+          "Sistem"
+        ],
+        "summary": "API kök dizini — belgelerin adresleri",
+        "description": "Yalnız taban adresi bilen bir ajan nereye bakacağını buradan öğrenir.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "api": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "docs": {
+                      "type": "object",
+                      "properties": {
+                        "llms": {
+                          "type": "string"
+                        },
+                        "llmsFull": {
+                          "type": "string"
+                        },
+                        "openapi": {
+                          "type": "string"
+                        },
+                        "reference": {
+                          "type": "string"
+                        },
+                        "panel": {
+                          "type": "string"
+                        },
+                        "health": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "llms",
+                        "llmsFull",
+                        "openapi",
+                        "reference",
+                        "panel",
+                        "health"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "auth": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "api",
+                    "note",
+                    "docs",
+                    "auth"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/companies": {
+      "get": {
+        "tags": [
+          "Şirketler"
+        ],
+        "summary": "Kiracının mükelleflerini listele",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "companies": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Company"
+                      }
+                    }
+                  },
+                  "required": [
+                    "companies"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `MISSING_API_KEY` (401), `INVALID_API_KEY` (401), `TENANT_AMBIGUOUS` (400). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Şirketler"
+        ],
+        "summary": "Mükellef tanımla",
+        "description": "Mock'ta \"e-Fatura sicili\" = bu kiracıda tanımlı VE `eInvoiceRegistered: true` şirketler. Alıcı olarak tanımlı bir şirkete fatura kesilirse belge teslim olunca onun GELEN kutusuna düşer.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Oluşturuldu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Company"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATION_FAILED` (400), `INVALID_VKN` (400), `UNKNOWN_PROFILE` (400). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `COMPANY_EXISTS` (409). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/companies/{vkn}": {
+      "get": {
+        "tags": [
+          "Şirketler"
+        ],
+        "summary": "Tek mükellef",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vkn",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Company"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `COMPANY_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents": {
+      "post": {
+        "tags": [
+          "Belgeler"
+        ],
+        "summary": "Fatura gönder (JSON → UBL)",
+        "description": "Ana yol. Gövde json2ubl-ts ile UBL-TR'ye çevrilir → **canlı XSD + şematron** → test sertifikasıyla imza → durum makinesi. Kabul **202**'dir; teslim asenkron gelir (`document.delivered` webhook'u ya da yoklama).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Company",
+            "in": "header",
+            "description": "İşlemin yapıldığı mükellefin VKN/TCKN'si. Kiracı anahtarı muhasebe yazılımını, bu başlık o yazılımın hangi müşterisi adına konuşulduğunu seçer (MimForge tenant→branch modeli).",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{10,11}$",
+              "example": "1111111111"
+            },
+            "required": true
+          },
+          {
+            "name": "X-Scenario",
+            "in": "header",
+            "required": false,
+            "description": "Belgenin izleyeceği durum makinesi senaryosu. Verilmezse `happy`. Katalog: `GET /v1/_sandbox/scenarios`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "happy",
+                "receiver_reject",
+                "gib_stalled",
+                "gib_error",
+                "slow"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonInvoiceInput"
+              },
+              "examples": {
+                "temel": {
+                  "summary": "Temel satış faturası",
+                  "description": "İkinci denemede `uuid` ve `id`'yi değiştirin — aynı ETTN/numara 409 alır.",
+                  "value": {
+                    "id": "ORN2026000000001",
+                    "uuid": "6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f",
+                    "datetime": "2026-09-20T10:00:00",
+                    "profile": "TEMELFATURA",
+                    "type": "SATIS",
+                    "currencyCode": "TRY",
+                    "sender": {
+                      "taxNumber": "1111111111",
+                      "name": "DENEME GÖNDERİCİ A.Ş.",
+                      "taxOffice": "DENEME VERGİ DAİRESİ",
+                      "address": "Deneme Mah. No:1",
+                      "district": "Çankaya",
+                      "city": "Ankara"
+                    },
+                    "customer": {
+                      "taxNumber": "2222222222",
+                      "name": "DENEME ALICI LTD. ŞTİ.",
+                      "taxOffice": "DENEME VERGİ DAİRESİ",
+                      "address": "Deneme Cad. No:2",
+                      "district": "Kadıköy",
+                      "city": "İstanbul"
+                    },
+                    "lines": [
+                      {
+                        "name": "Danışmanlık hizmeti",
+                        "quantity": 1,
+                        "price": 1000,
+                        "unitCode": "Adet",
+                        "kdvPercent": 20
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Kabul edildi — durum asenkron ilerler",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentAccepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `JSON_BUILD_FAILED` (400), `SCHEMA_INVALID` (400), `VALIDATION_FAILED` (400), `SENDER_MISMATCH` (400), `RECEIVER_NOT_REGISTERED` (400), `DOCNO_FORMAT` (400), `DOCNO_YEAR_MISMATCH` (400), `BRANCH_REQUIRED` (400), `INVALID_VKN` (400), `CONTEXT` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DUPLICATE_UUID` (409), `DUPLICATE_DOCNO` (409). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATOR_UNAVAILABLE` (503), `OFFLINE_MODE` (503), `NUMBERING_UNAVAILABLE` (503). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Belgeler"
+        ],
+        "summary": "Belgeleri listele",
+        "description": "`X-Company` verilirse liste o mükellefle sınırlanır. Yeniden eskiye sıralı.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Company",
+            "in": "header",
+            "description": "İşlemin yapıldığı mükellefin VKN/TCKN'si. Kiracı anahtarı muhasebe yazılımını, bu başlık o yazılımın hangi müşterisi adına konuşulduğunu seçer (MimForge tenant→branch modeli).",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{10,11}$",
+              "example": "1111111111"
+            },
+            "required": false
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Direction"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DocStatus"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DocumentType"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 200
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documents": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Document"
+                      }
+                    },
+                    "page": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "offset": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "limit",
+                        "offset"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documents",
+                    "page"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/ubl": {
+      "post": {
+        "tags": [
+          "Belgeler"
+        ],
+        "summary": "Ham UBL-TR XML gönder",
+        "description": "Kendi UBL'sini üreten entegrasyonlar için. JSON yoluyla AYNI kapılardan geçer. Belge numarası (`cbc:ID`) yoksa `X-Series-Prefix` ile seriden numara alınır.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Company",
+            "in": "header",
+            "description": "İşlemin yapıldığı mükellefin VKN/TCKN'si. Kiracı anahtarı muhasebe yazılımını, bu başlık o yazılımın hangi müşterisi adına konuşulduğunu seçer (MimForge tenant→branch modeli).",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{10,11}$",
+              "example": "1111111111"
+            },
+            "required": true
+          },
+          {
+            "name": "X-Scenario",
+            "in": "header",
+            "required": false,
+            "description": "Belgenin izleyeceği durum makinesi senaryosu. Verilmezse `happy`. Katalog: `GET /v1/_sandbox/scenarios`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "happy",
+                "receiver_reject",
+                "gib_stalled",
+                "gib_error",
+                "slow"
+              ]
+            }
+          },
+          {
+            "name": "X-Series-Prefix",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentAccepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `MALFORMED_XML` (400), `SCHEMA_INVALID` (400), `MULTIPLE_TAX_TOTALS` (400), `TYPE_MISMATCH` (400), `BRANCH_REQUIRED` (400), `INVALID_VKN` (400), `CONTEXT` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DUPLICATE_UUID` (409), `DUPLICATE_DOCNO` (409), `NO_DEFAULT_SERIES` (409). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATOR_UNAVAILABLE` (503), `OFFLINE_MODE` (503), `NUMBERING_UNAVAILABLE` (503). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{id}": {
+      "get": {
+        "tags": [
+          "Belgeler"
+        ],
+        "summary": "Belge",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{id}/history": {
+      "get": {
+        "tags": [
+          "Belgeler"
+        ],
+        "summary": "Olay geçmişi — belge bu duruma NEDEN geldi",
+        "description": "Her geçiş: kural kimliği, önceki/sonraki durum, ham GİB kodu, alarm, belge sürümü.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DocumentEvent"
+                      }
+                    }
+                  },
+                  "required": [
+                    "events"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{id}/resend": {
+      "post": {
+        "tags": [
+          "Belgeler"
+        ],
+        "summary": "SEND_FAILED belgeyi yeniden gönder",
+        "description": "Yalnız `SEND_FAILED` + GİDEN. Son ham GİB koduna göre sınıflanır: **A** yeniden gönderilir; **B** (`NEEDS_RESIGN`) belge düzeltilip aynı ETTN ile yeniden POST edilmeli; **C** asla/bekle.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "ettn": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "$ref": "#/components/schemas/DocStatus"
+                    },
+                    "resendClass": {
+                      "type": "string"
+                    },
+                    "applied": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "ettn",
+                    "status",
+                    "resendClass",
+                    "applied"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `ALREADY_DELIVERED` (409), `SEND_IN_PROGRESS` (409), `NOT_RESENDABLE` (409), `NEEDS_RESIGN` (409), `NOT_RESENDABLE_GIB` (409). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{id}/xml": {
+      "get": {
+        "tags": [
+          "Belgeler"
+        ],
+        "summary": "İmzalı UBL-TR XML",
+        "description": "Yanıt başlığı `X-MimMock-Document-Signature: test-certificate; self-signed; chain-validation-fails-by-design`. İmza yapısı gerçek; zincir doğrulaması KASTEN geçersiz.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UBL-TR",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{id}/html": {
+      "get": {
+        "tags": [
+          "Görüntü"
+        ],
+        "summary": "HTML görüntü (canlı şablon)",
+        "description": "Görüntü CANLI mimkit'ten gelir; mock şablonu kendisi çizmez. Başlık: `X-MimMock-Template`.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "HTML",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404), `TEMPLATE_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `TEMPLATE_UNAVAILABLE` (503). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Görüntü"
+        ],
+        "summary": "PDF görüntü (canlı şablon)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404), `TEMPLATE_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `TEMPLATE_UNAVAILABLE` (503). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/templates": {
+      "get": {
+        "tags": [
+          "Görüntü"
+        ],
+        "summary": "Seçilebilir görüntü şablonları",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Company",
+            "in": "header",
+            "description": "İşlemin yapıldığı mükellefin VKN/TCKN'si. Kiracı anahtarı muhasebe yazılımını, bu başlık o yazılımın hangi müşterisi adına konuşulduğunu seçer (MimForge tenant→branch modeli).",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{10,11}$",
+              "example": "1111111111"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "required": [
+                    "templates"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `TEMPLATE_UNAVAILABLE` (503). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inbox": {
+      "get": {
+        "tags": [
+          "Gelen kutusu"
+        ],
+        "summary": "Gelen belgeler",
+        "description": "En yeni 100 belge. `X-Company` verilirse o mükellefin kutusu.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Company",
+            "in": "header",
+            "description": "İşlemin yapıldığı mükellefin VKN/TCKN'si. Kiracı anahtarı muhasebe yazılımını, bu başlık o yazılımın hangi müşterisi adına konuşulduğunu seçer (MimForge tenant→branch modeli).",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{10,11}$",
+              "example": "1111111111"
+            },
+            "required": false
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DocStatus"
+            }
+          },
+          {
+            "name": "replyStatus",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ReplyStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inbox": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InboxDocument"
+                      }
+                    }
+                  },
+                  "required": [
+                    "inbox"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inbox/{id}": {
+      "get": {
+        "tags": [
+          "Gelen kutusu"
+        ],
+        "summary": "Gelen belge",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Gelen belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxDocument"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/inbox/{id}/reply": {
+      "post": {
+        "tags": [
+          "Gelen kutusu"
+        ],
+        "summary": "Ticari kabul / ret",
+        "description": "Kapı SIRASI normatiftir: (1) yalnız `TICARIFATURA` → (2) 🔑 belge `DELIVERED` olmalı (`DOCUMENT_NOT_SETTLED`) → (3) yanıt durumu `AWAITING` → (4) 8 günlük pencere. Önce `replyable` alanını okuyun.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Gelen belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "decision"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "decision": {
+                    "type": "string",
+                    "enum": [
+                      "ACCEPTED",
+                      "REJECTED"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "`REJECTED` için zorunlu."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATION_FAILED` (400), `EMPTY_REJECT_REASON` (400). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `NOT_COMMERCIAL` (409), `DOCUMENT_NOT_SETTLED` (409), `REPLY_IN_PROGRESS` (409), `ALREADY_REPLIED` (409), `REPLY_WINDOW_EXPIRED` (409). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "Kayıtlı webhook'lar ve yeniden deneme politikası",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "webhooks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Webhook"
+                      }
+                    },
+                    "retryPolicy": {
+                      "type": "object",
+                      "properties": {
+                        "delaysMs": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer"
+                          },
+                          "example": [
+                            2000,
+                            5000,
+                            15000,
+                            60000,
+                            300000
+                          ]
+                        },
+                        "maxAttempts": {
+                          "type": "integer",
+                          "const": 6
+                        }
+                      },
+                      "required": [
+                        "delaysMs",
+                        "maxAttempts"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "webhooks",
+                    "retryPolicy"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "Webhook kaydet",
+        "description": "Container içinden ana makinenize ulaşmak için `http://host.docker.internal:<port>/…` kullanın.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATION_FAILED` (400). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `CONTEXT` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/deliveries": {
+      "get": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "Teslim günlüğü",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deliveries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Delivery"
+                      }
+                    }
+                  },
+                  "required": [
+                    "deliveries"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/replay": {
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "Teslimi elle yeniden gönder (ölü mektuptan da)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "deliveryId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "deliveryId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Delivery"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/scenarios": {
+      "get": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Senaryo kataloğu",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "selectable": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ScenarioName"
+                      }
+                    },
+                    "scenarios": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Scenario"
+                      }
+                    }
+                  },
+                  "required": [
+                    "selectable",
+                    "scenarios"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/clock": {
+      "get": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Sanal saati oku",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Clock"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Sanal saati ilerlet / ayarla / sıfırla",
+        "description": "15 günlük bir bekleyişi bir saniyede atlatır; vadesi gelen TÜM geçişler hemen ateşlenir. Webhook imza damgaları GERÇEK saatte kalır (±5 dk pencere bozulmaz).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "advanceMs": {
+                    "type": "integer"
+                  },
+                  "advanceDays": {
+                    "type": "number",
+                    "example": 16
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "reset": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "now": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "offsetMs": {
+                      "type": "integer"
+                    },
+                    "appliedTransitions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "required": [
+                    "now",
+                    "offsetMs",
+                    "appliedTransitions"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATION_FAILED` (400). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/documents/{id}/advance": {
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Belgeyi bir adım ilerlet",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applied": {},
+                    "status": {
+                      "$ref": "#/components/schemas/DocStatus"
+                    },
+                    "rawGibCode": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "nextState": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "nextAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "applied",
+                    "status",
+                    "rawGibCode",
+                    "nextState",
+                    "nextAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/documents/{id}/fail": {
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Ham GİB kodu enjekte et (arıza/geri alma)",
+        "description": "Kod, GİB durum sorgusundan dönmüş gibi uygulanır. Örnekler: `1150` → `SEND_FAILED`; `1230` (yalnız `DELIVERED`'dan) → teslim GERİ ALINIR; ara kodlar (1000/1100/1210) durumu değiştirmez.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "rawGibCode"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "rawGibCode": {
+                    "type": "integer",
+                    "example": 1230
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "applied",
+                    "status",
+                    "rawGibCode"
+                  ],
+                  "properties": {
+                    "applied": {
+                      "description": "Uygulanan geçiş; kod bu durumda geçiş üretmediyse null."
+                    },
+                    "status": {
+                      "$ref": "#/components/schemas/DocStatus"
+                    },
+                    "rawGibCode": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "note": {
+                      "type": "string",
+                      "description": "YALNIZ geçiş uygulanmadığında gelir (ör. ara kodlar 1000/1100/1210)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATION_FAILED` (400). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/documents/{id}/scenario": {
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Belgenin senaryosunu değiştir",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Belge kimliği (`doc_…` biçiminde; ETTN DEĞİL).",
+            "schema": {
+              "type": "string",
+              "example": "doc_7c74c707-7aef-47dd-abe7-33ac542d33f0"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "scenario"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "scenario": {
+                    "$ref": "#/components/schemas/ScenarioName"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "scenario": {
+                      "$ref": "#/components/schemas/ScenarioName"
+                    },
+                    "nextState": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "nextAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "scenario",
+                    "nextState",
+                    "nextAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATION_FAILED` (400). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `DOCUMENT_NOT_FOUND` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/inbox": {
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Gelen kutusuna ham XML enjekte et",
+        "description": "Otomatik testler için: `X-Company` mükellefinin gelen kutusuna, dışarıdan gelmiş gibi bir belge düşürür. İlk durum `RECEIVED`; `DELIVERED` için S_APR teyidi beklenir. `X-Scenario: inbound_sr_stalled` ile teyidin hiç gelmediği hâl sınanır.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Company",
+            "in": "header",
+            "description": "İşlemin yapıldığı mükellefin VKN/TCKN'si. Kiracı anahtarı muhasebe yazılımını, bu başlık o yazılımın hangi müşterisi adına konuşulduğunu seçer (MimForge tenant→branch modeli).",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{10,11}$",
+              "example": "1111111111"
+            },
+            "required": true
+          },
+          {
+            "name": "X-Scenario",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "inbound_happy",
+                "inbound_sr_stalled"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "ettn": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "$ref": "#/components/schemas/DocStatus"
+                    },
+                    "replyStatus": {
+                      "$ref": "#/components/schemas/ReplyStatus"
+                    },
+                    "scenario": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "ettn",
+                    "status",
+                    "replyStatus",
+                    "scenario"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `MALFORMED_XML` (400), `BRANCH_REQUIRED` (400), `INVALID_VKN` (400), `CONTEXT` (404). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/traffic": {
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Trafik üret (bir tur)",
+        "description": "Tanımlı şirketlere dışarıdan gelmiş gibi GERÇEK, canlı mimkit doğrulamasından geçmiş UBL üretir. Üretilen her belge `generated: true` ile işaretlidir.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "produced": {
+                      "type": "integer"
+                    },
+                    "duplicate": {
+                      "type": "integer"
+                    },
+                    "rejected": {
+                      "type": "integer"
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "stats": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "produced",
+                    "duplicate",
+                    "rejected",
+                    "results",
+                    "stats"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Hata. Beklenebilecek `errorCode` değerleri: `VALIDATOR_UNAVAILABLE` (503). Tam katalog: `components.schemas.ErrorCode`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/traffic/reset": {
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Trafik tohumunu sıfırla (aynı akışı baştan üret)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reset": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "seed": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "reset",
+                    "seed"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/reset": {
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "TÜM veriyi sil, tohumu yeniden yaz",
+        "description": "🔴 Geri alınamaz. Şema düşürülüp yeniden kurulur; sanal saat sıfırlanır.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reset": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "seeded": {
+                      "type": "boolean"
+                    },
+                    "tenantApiKey": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "reset",
+                    "seeded",
+                    "tenantApiKey"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/requests": {
+      "get": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Ham istek günlüğü — ne gönderdiniz, ne döndük",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 200
+            }
+          },
+          {
+            "name": "errorsOnly",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "`errorsOnly=1` ile birlikte"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requests": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RequestLogEntry"
+                      }
+                    }
+                  },
+                  "required": [
+                    "requests"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/_sandbox/webhook-sink": {
+      "get": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Tohum webhook alıcısının aldıkları",
+        "description": "Mock kendi webhook'unu kendi yutar ve imzayı GERÇEKTEN doğrular — kendi sunucunuzu kurmadan teslimi ve imzayı görebilirsiniz.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "receivedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "event": {
+                            "type": "string"
+                          },
+                          "sequence": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "signatureValid": {
+                            "type": "boolean"
+                          },
+                          "signatureError": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "body": {}
+                        },
+                        "required": [
+                          "id",
+                          "receivedAt",
+                          "event",
+                          "sequence",
+                          "signatureValid",
+                          "signatureError",
+                          "body"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "events"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sandbox"
+        ],
+        "summary": "Tohum webhook alıcısı (mock'un kendisi çağırır)",
+        "description": "Kimlik istemez. Geçersiz imzayı **400** ile reddeder — bozuk imzalayıcı görünmez kalmasın.",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accepted": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "accepted"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "İmza geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accepted": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "signature": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "accepted",
+                    "signature"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "document.status_changed": {
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "document.status_changed olayı (sizin sunucunuza)",
+        "description": "EN AZ BİR KEZ teslim edilir → tüketici idempotent olmalı. Sıra garanti DEĞİL → `documentVersion` ile eski olayı yok sayın. 2xx dışı yanıt yeniden denemeyi tetikler (2s → 5s → 15s → 60s → 300s, sonra ölü mektup).",
+        "parameters": [
+          {
+            "name": "x-mimmock-signature",
+            "in": "header",
+            "required": true,
+            "description": "v1=<hex> — HMAC-SHA256(secret, timestamp + \".\" + ham gövde)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix ms, GERÇEK saat. ±5 dk dışındakini reddedin.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-event",
+            "in": "header",
+            "required": true,
+            "description": "Olay adı",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-sequence",
+            "in": "header",
+            "required": true,
+            "description": "Kiracı içinde monoton sıra",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-delivery",
+            "in": "header",
+            "required": true,
+            "description": "Teslim kimliği (tekrarları ayıklamak için)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "event",
+                  "documentId"
+                ],
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "const": "document.status_changed"
+                  },
+                  "documentId": {
+                    "type": "string"
+                  },
+                  "documentVersion": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "ettn": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/DocStatus"
+                  },
+                  "previousStatus": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "rawGibCode": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "alarm": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "transitionId": {
+                    "type": "string"
+                  },
+                  "replyStatus": {
+                    "$ref": "#/components/schemas/ReplyStatus"
+                  },
+                  "senderVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "receiverVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Alındı. Başka her yanıt yeniden denenir."
+          }
+        }
+      }
+    },
+    "document.delivered": {
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "document.delivered olayı (sizin sunucunuza)",
+        "description": "EN AZ BİR KEZ teslim edilir → tüketici idempotent olmalı. Sıra garanti DEĞİL → `documentVersion` ile eski olayı yok sayın. 2xx dışı yanıt yeniden denemeyi tetikler (2s → 5s → 15s → 60s → 300s, sonra ölü mektup).",
+        "parameters": [
+          {
+            "name": "x-mimmock-signature",
+            "in": "header",
+            "required": true,
+            "description": "v1=<hex> — HMAC-SHA256(secret, timestamp + \".\" + ham gövde)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix ms, GERÇEK saat. ±5 dk dışındakini reddedin.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-event",
+            "in": "header",
+            "required": true,
+            "description": "Olay adı",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-sequence",
+            "in": "header",
+            "required": true,
+            "description": "Kiracı içinde monoton sıra",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-delivery",
+            "in": "header",
+            "required": true,
+            "description": "Teslim kimliği (tekrarları ayıklamak için)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "event",
+                  "documentId"
+                ],
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "const": "document.delivered"
+                  },
+                  "documentId": {
+                    "type": "string"
+                  },
+                  "documentVersion": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "ettn": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/DocStatus"
+                  },
+                  "previousStatus": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "rawGibCode": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "alarm": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "transitionId": {
+                    "type": "string"
+                  },
+                  "replyStatus": {
+                    "$ref": "#/components/schemas/ReplyStatus"
+                  },
+                  "senderVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "receiverVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Alındı. Başka her yanıt yeniden denenir."
+          }
+        }
+      }
+    },
+    "document.rejected": {
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "document.rejected olayı (sizin sunucunuza)",
+        "description": "EN AZ BİR KEZ teslim edilir → tüketici idempotent olmalı. Sıra garanti DEĞİL → `documentVersion` ile eski olayı yok sayın. 2xx dışı yanıt yeniden denemeyi tetikler (2s → 5s → 15s → 60s → 300s, sonra ölü mektup).",
+        "parameters": [
+          {
+            "name": "x-mimmock-signature",
+            "in": "header",
+            "required": true,
+            "description": "v1=<hex> — HMAC-SHA256(secret, timestamp + \".\" + ham gövde)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix ms, GERÇEK saat. ±5 dk dışındakini reddedin.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-event",
+            "in": "header",
+            "required": true,
+            "description": "Olay adı",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-sequence",
+            "in": "header",
+            "required": true,
+            "description": "Kiracı içinde monoton sıra",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-delivery",
+            "in": "header",
+            "required": true,
+            "description": "Teslim kimliği (tekrarları ayıklamak için)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "event",
+                  "documentId"
+                ],
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "const": "document.rejected"
+                  },
+                  "documentId": {
+                    "type": "string"
+                  },
+                  "documentVersion": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "ettn": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/DocStatus"
+                  },
+                  "previousStatus": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "rawGibCode": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "alarm": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "transitionId": {
+                    "type": "string"
+                  },
+                  "replyStatus": {
+                    "$ref": "#/components/schemas/ReplyStatus"
+                  },
+                  "senderVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "receiverVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Alındı. Başka her yanıt yeniden denenir."
+          }
+        }
+      }
+    },
+    "inbox.received": {
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "inbox.received olayı (sizin sunucunuza)",
+        "description": "EN AZ BİR KEZ teslim edilir → tüketici idempotent olmalı. Sıra garanti DEĞİL → `documentVersion` ile eski olayı yok sayın. 2xx dışı yanıt yeniden denemeyi tetikler (2s → 5s → 15s → 60s → 300s, sonra ölü mektup).",
+        "parameters": [
+          {
+            "name": "x-mimmock-signature",
+            "in": "header",
+            "required": true,
+            "description": "v1=<hex> — HMAC-SHA256(secret, timestamp + \".\" + ham gövde)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix ms, GERÇEK saat. ±5 dk dışındakini reddedin.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-event",
+            "in": "header",
+            "required": true,
+            "description": "Olay adı",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-sequence",
+            "in": "header",
+            "required": true,
+            "description": "Kiracı içinde monoton sıra",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-delivery",
+            "in": "header",
+            "required": true,
+            "description": "Teslim kimliği (tekrarları ayıklamak için)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "event",
+                  "documentId"
+                ],
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "const": "inbox.received"
+                  },
+                  "documentId": {
+                    "type": "string"
+                  },
+                  "documentVersion": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "ettn": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/DocStatus"
+                  },
+                  "previousStatus": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "rawGibCode": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "alarm": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "transitionId": {
+                    "type": "string"
+                  },
+                  "replyStatus": {
+                    "$ref": "#/components/schemas/ReplyStatus"
+                  },
+                  "senderVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "receiverVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Alındı. Başka her yanıt yeniden denenir."
+          }
+        }
+      }
+    },
+    "report.status_changed": {
+      "post": {
+        "tags": [
+          "Webhook"
+        ],
+        "summary": "report.status_changed olayı (sizin sunucunuza)",
+        "description": "EN AZ BİR KEZ teslim edilir → tüketici idempotent olmalı. Sıra garanti DEĞİL → `documentVersion` ile eski olayı yok sayın. 2xx dışı yanıt yeniden denemeyi tetikler (2s → 5s → 15s → 60s → 300s, sonra ölü mektup).",
+        "parameters": [
+          {
+            "name": "x-mimmock-signature",
+            "in": "header",
+            "required": true,
+            "description": "v1=<hex> — HMAC-SHA256(secret, timestamp + \".\" + ham gövde)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-timestamp",
+            "in": "header",
+            "required": true,
+            "description": "Unix ms, GERÇEK saat. ±5 dk dışındakini reddedin.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-event",
+            "in": "header",
+            "required": true,
+            "description": "Olay adı",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-sequence",
+            "in": "header",
+            "required": true,
+            "description": "Kiracı içinde monoton sıra",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-mimmock-delivery",
+            "in": "header",
+            "required": true,
+            "description": "Teslim kimliği (tekrarları ayıklamak için)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "event",
+                  "documentId"
+                ],
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "const": "report.status_changed"
+                  },
+                  "documentId": {
+                    "type": "string"
+                  },
+                  "documentVersion": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "ettn": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/DocStatus"
+                  },
+                  "previousStatus": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "rawGibCode": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "alarm": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "transitionId": {
+                    "type": "string"
+                  },
+                  "replyStatus": {
+                    "$ref": "#/components/schemas/ReplyStatus"
+                  },
+                  "senderVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "receiverVkn": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Alındı. Başka her yanıt yeniden denenir."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Kiracı API anahtarı. Tohum: `mimmock_dev_key`."
+      }
+    },
+    "schemas": {
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "BRANCH_REQUIRED",
+          "CONTEXT",
+          "FORBIDDEN",
+          "INVALID_VKN",
+          "MISSING_API_KEY",
+          "INVALID_API_KEY",
+          "TENANT_AMBIGUOUS",
+          "COMPANY_NOT_FOUND",
+          "COMPANY_EXISTS",
+          "VALIDATION_FAILED",
+          "UNKNOWN_PROFILE",
+          "NOT_FOUND",
+          "INTERNAL",
+          "MALFORMED_XML",
+          "UNSUPPORTED_TYPE",
+          "SERIES_PREFIX_NOT_APPLICABLE",
+          "DOCNO_FORMAT",
+          "DOCNO_YEAR_MISMATCH",
+          "MULTIPLE_TAX_TOTALS",
+          "DUPLICATE_UUID",
+          "DUPLICATE_DOCNO",
+          "VALIDATOR_UNAVAILABLE",
+          "SCHEMA_INVALID",
+          "TYPE_UNMAPPED",
+          "TYPE_MISMATCH",
+          "SENDER_MISMATCH",
+          "RECEIVER_NOT_REGISTERED",
+          "RECEIVER_REGISTERED",
+          "RECEIVER_VKN_MISSING",
+          "NO_DEFAULT_SERIES",
+          "NUMBER_REJECTED",
+          "NUMBERING_UNAVAILABLE",
+          "SEND_IN_PROGRESS",
+          "ALREADY_DELIVERED",
+          "NOT_RESENDABLE",
+          "NEEDS_RESIGN",
+          "NOT_RESENDABLE_GIB",
+          "DOCUMENT_NOT_SETTLED",
+          "NOT_COMMERCIAL",
+          "ALREADY_REPLIED",
+          "REPLY_IN_PROGRESS",
+          "REPLY_WINDOW_EXPIRED",
+          "EMPTY_REJECT_REASON",
+          "TEMPLATE_UNAVAILABLE",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_REJECTED",
+          "DOCUMENT_NOT_FOUND",
+          "JSON_BUILD_FAILED",
+          "OFFLINE_MODE"
+        ],
+        "description": "Kararlı, İngilizce hata kodu. `reason` insan metnidir ve değişebilir — dallanmayı DAİMA `errorCode` üzerinden yapın."
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "errorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Türkçe açıklama. Kod içinde dallanma için KULLANMAYIN."
+          },
+          "errors": {
+            "type": "array",
+            "description": "Alan düzeyinde hatalar (varsa).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "errorCode",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "DocStatus": {
+        "type": "string",
+        "enum": [
+          "RECEIVED",
+          "AWAITING_SIGNATURE",
+          "AWAITING_NUMBERING",
+          "PROCESSING",
+          "SENT_TO_GIB",
+          "DELIVERED",
+          "SEND_FAILED",
+          "REPORTED",
+          "CANCELLED"
+        ],
+        "description": "Belge durumu (MimForge sözlüğünden ÖLÇÜLDÜ). 🔴 Belge düzleminde `FAILED` YOKTUR; süre dolması belgeyi askıda bırakır. `SEND_FAILED` terminal değildir — `resend` ile çıkılır."
+      },
+      "ReplyStatus": {
+        "type": "string",
+        "enum": [
+          "NONE",
+          "AWAITING",
+          "REPLY_IN_PROGRESS",
+          "ACCEPTED",
+          "REJECTED",
+          "PARTIAL",
+          "RETURNED",
+          "DEEMED_ACCEPTED"
+        ]
+      },
+      "Direction": {
+        "type": "string",
+        "enum": [
+          "OUTBOUND",
+          "INBOUND"
+        ]
+      },
+      "DocumentType": {
+        "type": "string",
+        "enum": [
+          "EFATURA",
+          "EARSIV",
+          "EIRSALIYE",
+          "ESMM",
+          "EMM"
+        ]
+      },
+      "ScenarioName": {
+        "type": "string",
+        "enum": [
+          "happy",
+          "receiver_reject",
+          "gib_stalled",
+          "gib_error",
+          "inbound_happy",
+          "inbound_sr_stalled",
+          "slow",
+          "reply_flow"
+        ]
+      },
+      "WebhookEvent": {
+        "type": "string",
+        "enum": [
+          "document.status_changed",
+          "document.delivered",
+          "document.rejected",
+          "inbox.received",
+          "report.status_changed"
+        ]
+      },
+      "InvoiceProfileId": {
+        "type": "string",
+        "enum": [
+          "TEMELFATURA",
+          "TICARIFATURA",
+          "YOLCUBERABERFATURA",
+          "IHRACAT",
+          "OZELFATURA",
+          "KAMU",
+          "HKS",
+          "ENERJI",
+          "ILAC_TIBBICIHAZ",
+          "YATIRIMTESVIK",
+          "IDIS",
+          "EARSIVFATURA"
+        ]
+      },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "vkn": {
+            "type": "string",
+            "description": "10 hane VKN veya 11 hane TCKN"
+          },
+          "title": {
+            "type": "string"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "district": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "city": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "country": {
+                "type": "string"
+              },
+              "taxOffice": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "street",
+              "district",
+              "city",
+              "country",
+              "taxOffice"
+            ],
+            "additionalProperties": false
+          },
+          "aliases": {
+            "type": "object",
+            "properties": {
+              "pk": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Posta kutusu etiketleri"
+              },
+              "gb": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Gönderici birim etiketleri"
+              }
+            },
+            "required": [
+              "pk",
+              "gb"
+            ],
+            "additionalProperties": false
+          },
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceProfileId"
+            }
+          },
+          "templateId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Görüntü şablonu: `templateId@version`"
+          },
+          "seriesPrefix": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Numaralama serisi öneki (örn. `ABC`)"
+          },
+          "eInvoiceRegistered": {
+            "type": "boolean",
+            "description": "e-Fatura sicilinde mi. Değilse belgeleri e-Arşiv yoluna düşer."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "vkn",
+          "title",
+          "address",
+          "aliases",
+          "profiles",
+          "templateId",
+          "seriesPrefix",
+          "eInvoiceRegistered",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CompanyInput": {
+        "type": "object",
+        "required": [
+          "vkn",
+          "title",
+          "eInvoiceRegistered"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "vkn": {
+            "type": "string",
+            "pattern": "^[0-9]{10,11}$",
+            "example": "3333333333"
+          },
+          "title": {
+            "type": "string",
+            "example": "ÖRNEK TİCARET A.Ş."
+          },
+          "addressStreet": {
+            "type": "string"
+          },
+          "addressDistrict": {
+            "type": "string"
+          },
+          "addressCity": {
+            "type": "string"
+          },
+          "addressCountry": {
+            "type": "string",
+            "default": "Türkiye"
+          },
+          "taxOffice": {
+            "type": "string"
+          },
+          "pkAliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "urn:mail:defaultpk@ornek.com.tr"
+            ]
+          },
+          "gbAliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "urn:mail:defaultgb@ornek.com.tr"
+            ]
+          },
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceProfileId"
+            },
+            "example": [
+              "TEMELFATURA",
+              "TICARIFATURA"
+            ]
+          },
+          "templateId": {
+            "type": "string"
+          },
+          "seriesPrefix": {
+            "type": "string",
+            "example": "ORN"
+          },
+          "eInvoiceRegistered": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Mock kimliği (`doc_…`). Diğer uçlar bunu alır."
+          },
+          "ettn": {
+            "type": "string",
+            "description": "Evrensel Tekil Tanımlama Numarası (UUID). Yön ile birlikte tekildir."
+          },
+          "direction": {
+            "$ref": "#/components/schemas/Direction"
+          },
+          "type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "profile": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "typeCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocStatus"
+          },
+          "rawGibCode": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Son ham GİB kodu. 🔑 Teslim çıpası 1220'dir; 1300 zarf kapanışıdır; 1230 teslimi GERİ ALIR."
+          },
+          "replyStatus": {
+            "$ref": "#/components/schemas/ReplyStatus"
+          },
+          "documentNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Seri + yıl + sıra, örn. `ORN2026000000301`"
+          },
+          "issueDate": {
+            "type": "string",
+            "description": "YYYY-MM-DD"
+          },
+          "senderVkn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receiverVkn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currencyCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payableAmount": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Ödenecek tutar, ondalık metin olarak (`\"15300.00\"`)"
+          },
+          "sourceKind": {
+            "type": "string",
+            "description": "`json` | `ubl` | `inbound` | `generated`"
+          },
+          "generated": {
+            "type": "boolean",
+            "description": "Trafik üreteci mi üretti. Kendi trafiğinizle karışmasın diye her yerde işaretli."
+          },
+          "generatedScenario": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "validation": {
+            "type": "object",
+            "properties": {
+              "appliedXsd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "appliedSchematron": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "appliedXsd",
+              "appliedSchematron"
+            ],
+            "additionalProperties": false
+          },
+          "deliveredAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Teslim anı (1220). 1230 gelirse TEMİZLENİR."
+          },
+          "signature": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "`test-certificate` ya da null"
+              },
+              "signedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "chainValid": {
+                "type": "boolean",
+                "const": false,
+                "description": "🔴 Her zaman false — imza TEST sertifikasıyladır."
+              }
+            },
+            "required": [
+              "kind",
+              "signedAt",
+              "chainValid"
+            ],
+            "additionalProperties": false
+          },
+          "engine": {
+            "type": "object",
+            "properties": {
+              "scenario": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "nextState": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Motorun bir sonraki adımı (senaryo#adım). null = adım yok."
+              },
+              "nextAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "Bir sonraki adımın vadesi (SANAL saat)."
+              }
+            },
+            "required": [
+              "scenario",
+              "nextState",
+              "nextAt"
+            ],
+            "additionalProperties": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "ettn",
+          "direction",
+          "type",
+          "profile",
+          "typeCode",
+          "status",
+          "rawGibCode",
+          "replyStatus",
+          "documentNumber",
+          "issueDate",
+          "senderVkn",
+          "receiverVkn",
+          "currencyCode",
+          "payableAmount",
+          "sourceKind",
+          "generated",
+          "generatedScenario",
+          "validation",
+          "deliveredAt",
+          "signature",
+          "engine",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "InboxDocument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ettn": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "profile": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "typeCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocStatus",
+            "description": "🔑 `RECEIVED` = zarf alındı · `DELIVERED` = S_APR teyitlendi (İKİ ADIM)."
+          },
+          "rawGibCode": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "replyStatus": {
+            "$ref": "#/components/schemas/ReplyStatus"
+          },
+          "replyDecision": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "replyReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "documentNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issueDate": {
+            "type": "string"
+          },
+          "senderVkn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receiverVkn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payableAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currencyCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "systemResponse": {
+            "type": "object",
+            "description": "S_APR (sistem yanıtı) izleme — gelen akışın ikinci adımı.",
+            "properties": {
+              "sentAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "confirmedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "code": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Teyit kodu: 1200 veya 1300"
+              }
+            },
+            "required": [
+              "sentAt",
+              "confirmedAt",
+              "code"
+            ],
+            "additionalProperties": false
+          },
+          "replyable": {
+            "type": "object",
+            "description": "Yanıt kapısı — yanıt vermeden ÖNCE okuyun.",
+            "properties": {
+              "can": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Yanıt verilemiyorsa neden (örn. `DOCUMENT_NOT_SETTLED`)."
+              }
+            },
+            "required": [
+              "can",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "deliveredAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "replyDeadlineAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Ticari yanıt için son an (TTK md.21, 8 gün)."
+          },
+          "sourceDocumentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Bu belge mock içinde başka bir kiracının GİDEN belgesinden doğduysa onun kimliği."
+          },
+          "generated": {
+            "type": "boolean"
+          },
+          "generatedScenario": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "ettn",
+          "type",
+          "profile",
+          "typeCode",
+          "status",
+          "rawGibCode",
+          "replyStatus",
+          "replyDecision",
+          "replyReason",
+          "documentNumber",
+          "issueDate",
+          "senderVkn",
+          "receiverVkn",
+          "payableAmount",
+          "currencyCode",
+          "systemResponse",
+          "replyable",
+          "deliveredAt",
+          "replyDeadlineAt",
+          "sourceDocumentId",
+          "generated",
+          "generatedScenario",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentAccepted": {
+        "type": "object",
+        "description": "Belge kabul edildi (202). Durum ASENKRON ilerler: webhook dinleyin ya da `GET /v1/documents/{id}` yoklayın.",
+        "properties": {
+          "ettn": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocStatus"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/ScenarioName"
+          }
+        },
+        "required": [
+          "ettn",
+          "id",
+          "status",
+          "scenario"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentEvent": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Olay anı (SANAL saat)."
+          },
+          "ruleId": {
+            "type": "string",
+            "description": "Geçiş kuralı kimliği (G5…G16, L10, L11). `/llms-full.txt` geçiş tablosuna bakın."
+          },
+          "axis": {
+            "type": "string",
+            "description": "`status` ya da `reply`"
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rawGibCode": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "alarm": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "documentVersion": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "at",
+          "ruleId",
+          "axis",
+          "from",
+          "to",
+          "rawGibCode",
+          "alarm",
+          "documentVersion"
+        ],
+        "additionalProperties": false
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string",
+            "description": "HMAC anahtarı. Yerel sandbox olduğu için görünür."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEvent"
+            }
+          },
+          "companyVkn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Şirket süzgeci (boş = kiracının tüm şirketleri)."
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "secret",
+          "events",
+          "companyVkn",
+          "active",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookInput": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "http://host.docker.internal:3000/webhooks/mimmock"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEvent"
+            },
+            "description": "Boş = tüm olaylar."
+          },
+          "companyVkn": {
+            "type": "string",
+            "description": "Yalnız bu mükellefin olayları."
+          },
+          "secret": {
+            "type": "string",
+            "description": "Verilmezse üretilir (`whsec_…`)."
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "Delivery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "webhookId": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer",
+            "description": "Kiracı içinde monoton. Sıralama garanti DEĞİL — bununla sıralayın."
+          },
+          "event": {
+            "$ref": "#/components/schemas/WebhookEvent"
+          },
+          "documentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "documentVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Aynı belge için eski sürümlü olayı yok sayın."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "retrying",
+              "delivered",
+              "dead"
+            ]
+          },
+          "attempt": {
+            "type": "integer"
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "const": 6
+          },
+          "httpStatus": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nextAttemptAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "deliveredAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "payload": {
+            "type": "object",
+            "description": "Alıcıya gönderilen JSON gövde."
+          }
+        },
+        "required": [
+          "id",
+          "webhookId",
+          "sequence",
+          "event",
+          "documentId",
+          "documentVersion",
+          "status",
+          "attempt",
+          "maxAttempts",
+          "httpStatus",
+          "error",
+          "nextAttemptAt",
+          "deliveredAt",
+          "createdAt",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "Scenario": {
+        "type": "object",
+        "properties": {
+          "selectable": {
+            "type": "boolean",
+            "description": "`X-Scenario` ile seçilebilir mi. Diğerlerini motor otomatik bağlar."
+          },
+          "name": {
+            "$ref": "#/components/schemas/ScenarioName"
+          },
+          "description": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "event": {
+                  "type": "string"
+                },
+                "rawGibCode": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "delayMs": {
+                  "type": "integer"
+                },
+                "alarm": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "event",
+                "rawGibCode",
+                "delayMs",
+                "alarm",
+                "note"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "endsOpen": {
+            "type": "boolean",
+            "description": "true = senaryo AÇIK biter (belge askıda kalır — hata değil)."
+          }
+        },
+        "required": [
+          "selectable",
+          "name",
+          "description",
+          "steps",
+          "endsOpen"
+        ],
+        "additionalProperties": false
+      },
+      "Clock": {
+        "type": "object",
+        "properties": {
+          "now": {
+            "type": "string",
+            "format": "date-time",
+            "description": "SANAL şimdi — motorun ve vadelerin saati."
+          },
+          "offsetMs": {
+            "type": "integer",
+            "description": "Sanal saatin gerçek saatten sapması."
+          },
+          "real": {
+            "type": "string",
+            "format": "date-time",
+            "description": "GERÇEK şimdi. 🔴 Webhook imza damgaları bu saatle atılır."
+          }
+        },
+        "required": [
+          "now",
+          "offsetMs",
+          "real"
+        ],
+        "additionalProperties": false
+      },
+      "Transition": {
+        "type": "object",
+        "description": "Motorun uyguladığı geçiş (ayrıntı `DocumentEvent` ile aynı anlamdadır)."
+      },
+      "RequestLogEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "method": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "durationMs": {
+            "type": "integer"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "companyVkn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requestHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "`authorization`, `x-panel-token`, `x-mimmock-signature` MASKELİ."
+          },
+          "requestBody": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "4000 karakterde kırpılır."
+          },
+          "responseBody": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "4000 karakterde kırpılır."
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "method",
+          "url",
+          "status",
+          "durationMs",
+          "errorCode",
+          "companyVkn",
+          "requestHeaders",
+          "requestBody",
+          "responseBody"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ]
+          },
+          "api": {
+            "type": "string"
+          },
+          "dialect": {
+            "type": "string",
+            "enum": [
+              "sqlite",
+              "pg"
+            ]
+          },
+          "schemaFingerprint": {
+            "type": "string"
+          },
+          "panelTokenRequired": {
+            "type": "boolean"
+          },
+          "panelAvailable": {
+            "type": "boolean"
+          },
+          "mimkit": {
+            "type": "object",
+            "description": "Tek dış bağımlılık: doğrulama (XSD + şematron), numaralama ve görüntü.",
+            "properties": {
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Bağlı mimkit adresi."
+              },
+              "ready": {
+                "type": "boolean",
+                "description": "Erişildi VE anahtar geçerli. false ise belge alma 503 döner."
+              },
+              "offlineAllowed": {
+                "type": "boolean",
+                "description": "`MIMMOCK_ALLOW_OFFLINE=1` ile bilerek çevrimdışı mı."
+              }
+            },
+            "required": [
+              "url",
+              "ready",
+              "offlineAllowed"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status",
+          "api",
+          "dialect",
+          "schemaFingerprint",
+          "panelTokenRequired",
+          "panelAvailable",
+          "mimkit"
+        ],
+        "additionalProperties": false
+      },
+      "JsonInvoiceInput": {
+        "type": "object",
+        "description": "Basit fatura girdisi — **json2ubl-ts `SimpleInvoiceInput`**. Mock bunu UBL-TR'ye çevirir, CANLI şematrondan geçirir, imzalar ve durum makinesine sokar. Aşağıda sık kullanılan alt küme var; kütüphanenin kabul ettiği diğer alanlar (ÖTV, tevkifat, e-Arşiv bilgisi, SGK …) da geçerlidir.",
+        "required": [
+          "id",
+          "uuid",
+          "sender",
+          "customer",
+          "lines"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Belge numarası: 3 harf seri + 4 hane yıl + 9 hane sıra. JSON yolunda ZORUNLU (ölçüldü: verilmezse `JSON_BUILD_FAILED`). Yıl, `datetime` yılıyla aynı olmalı.",
+            "example": "ORN2026000000001"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ETTN. JSON yolunda ZORUNLU (ölçüldü: verilmezse `JSON_BUILD_FAILED`). Her yeni belge için YENİ bir UUID üretin — aynı ETTN ikinci kez `409 DUPLICATE_UUID` alır. B sınıfı bir hatadan sonra düzeltilmiş belgeyi AYNI ETTN ile gönderirsiniz.",
+            "example": "6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f"
+          },
+          "datetime": {
+            "type": "string",
+            "description": "Düzenleme anı `YYYY-MM-DDTHH:mm:ss`. 🔴 GELECEK tarih reddedilir.",
+            "example": "2026-09-20T10:00:00"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/InvoiceProfileId",
+            "default": "TEMELFATURA"
+          },
+          "type": {
+            "type": "string",
+            "example": "SATIS",
+            "description": "Fatura tipi: SATIS, IADE, TEVKIFAT, ISTISNA …"
+          },
+          "currencyCode": {
+            "type": "string",
+            "default": "TRY"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "description": "Döviz ise zorunlu."
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/ScenarioName",
+            "description": "`X-Scenario` başlığının gövdedeki eşi."
+          },
+          "seriesPrefix": {
+            "type": "string",
+            "description": "Numaralama serisi öneki (numarasız akış için)."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sender": {
+            "$ref": "#/components/schemas/JsonParty"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/JsonParty"
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/JsonLine"
+            }
+          }
+        }
+      },
+      "JsonParty": {
+        "type": "object",
+        "required": [
+          "taxNumber",
+          "name",
+          "address",
+          "district",
+          "city"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "taxNumber": {
+            "type": "string",
+            "description": "VKN (10) / TCKN (11). Gönderen = `X-Company` olmalı."
+          },
+          "name": {
+            "type": "string"
+          },
+          "taxOffice": {
+            "type": "string",
+            "description": "VKN için zorunlu."
+          },
+          "address": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string",
+            "default": "Türkiye"
+          },
+          "zipCode": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "alias": {
+            "type": "string",
+            "description": "Posta kutusu etiketi, örn. `urn:mail:defaultpk@firma.com.tr`"
+          }
+        }
+      },
+      "JsonLine": {
+        "type": "object",
+        "required": [
+          "name",
+          "quantity",
+          "price",
+          "kdvPercent"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "price": {
+            "type": "number",
+            "description": "Birim fiyat (KDV hariç)."
+          },
+          "unitCode": {
+            "type": "string",
+            "default": "Adet",
+            "description": "`Adet` ya da UBL kodu (`C62`)."
+          },
+          "kdvPercent": {
+            "type": "number",
+            "example": 20
+          },
+          "allowancePercent": {
+            "type": "number",
+            "description": "Satır iskontosu (%)."
+          },
+          "withholdingTaxCode": {
+            "type": "string",
+            "example": "603",
+            "description": "KDV tevkifat kodu."
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

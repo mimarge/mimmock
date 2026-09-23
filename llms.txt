@@ -1,0 +1,25 @@
+# MimMock
+
+> MimForge e-Fatura altyapısının bugünkü davranışının yerel simülatörü (sandbox). Gerçek UBL-TR üretir, canlı XSD + şematrondan geçirir, test sertifikasıyla imzalar, belgeyi MimForge'dan ölçülmüş durum makinesinde yürütür ve webhook atar. Gerçek GİB'e hiçbir şey gitmez. Yüzey GEÇİCİDİR — entegrasyonu ince bir adaptör katmanının arkasına yazın.
+
+Bir kodlama ajanıysanız: önce **llms-full.txt**'yi baştan sona okuyun. En sık yapılan beş hata (teslim anı 1220'dir, 1300 değil; teslim 1230 ile geri alınabilir; belge düzleminde FAILED yoktur; gelen belge iki adımlıdır; SEND_FAILED terminal değildir) orada §1'de.
+
+Tek dış bağımlılık: mimkit (doğrulama + numaralama + görüntü). Adres ve anahtar için bilgi@mimsoft.com.tr adresine e-posta gönderin. İmaj: `ghcr.io/mimarge/mimmock:latest`.
+
+Kimlik: `Authorization: Bearer mimmock_dev_key` + `X-Company: 1111111111` (tohum kiracı ve gönderici şirket; alıcı `2222222222`).
+
+## Belgeler
+
+- [Tam kılavuz](http://localhost:8088/llms-full.txt): durum makinesi, geçiş tablosu, senaryolar, webhook sözleşmesi ve doğrulama kodu, hata kataloğu, entegrasyon tarifi, test tarifleri, uç listesi
+- [OpenAPI 3.1](http://localhost:8088/openapi.json): makinece okunan sözleşme — istemci/tip üretimi için
+- [Etkileşimli API referansı](http://localhost:8088/docs): insan için, "Try it" istemcisiyle
+
+## Çalıştırma
+
+- [Sağlık](http://localhost:8088/healthz): mimkit hazır değilse 503 `degraded`
+- [Panel](http://localhost:8088/): durum tahtası — belgeler, olay ekseni, webhook teslimleri, ham istek günlüğü
+
+## Optional
+
+- [Webhook imza doğrulayıcı betik](https://github.com/mimarge/mimmock/blob/main/scripts/verify-webhook-signature.mjs): bağımsız referans uygulama
+- [Kurulum ve işletim](https://github.com/mimarge/mimmock#kurulum): container, ortam değişkenleri, sıfırlama, yedek
