@@ -1,0 +1,44 @@
+{
+  "name": "@mimmock/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json && node -e \"const fs=require('node:fs');fs.cpSync('src/signing/test-cert','dist/signing/test-cert',{recursive:true});fs.cpSync('src/docs/content','dist/docs/content',{recursive:true})\"",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.check.json",
+    "db:codegen": "tsx src/db/codegen.ts",
+    "db:codegen:check": "tsx src/db/codegen.ts --check",
+    "test:offline": "vitest run --exclude \"**/*.live.test.ts\"",
+    "test:live": "vitest run .live.test",
+    "docs:gen": "tsx src/docs/generate.ts",
+    "docs:check": "tsx src/docs/generate.ts --check"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.4",
+    "@scalar/fastify-api-reference": "^1.71.0",
+    "@xmldom/xmldom": "^0.9.12",
+    "better-sqlite3": "^13.0.3",
+    "drizzle-orm": "~0.45.3",
+    "fastify": "^5.12.5",
+    "json2ubl-ts": "^5.0.0",
+    "pg": "^8.23.0",
+    "xml-crypto": "^6.3.1"
+  },
+  "devDependencies": {
+    "@scalar/openapi-parser": "^0.29.5",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.20.4",
+    "@types/pg": "^8.23.1",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "drizzle-kit": "~0.31.11",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.1"
+  }
+}

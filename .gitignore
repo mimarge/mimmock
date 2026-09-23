@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+*.log
+
+# yerel çalışma verisi — depoya girmez
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# ortam değerleri — ASLA depoya girmez (plan §2b kapı 2)
+.env
+.env.*
+!.env.example
+
+.DS_Store
+
+# impeccable karar sayfasının yerel sunucu durumu (pid/port) — depoya girmez
+.impeccable/questions/

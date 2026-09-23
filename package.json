@@ -1,0 +1,23 @@
+{
+  "name": "mimmock",
+  "private": true,
+  "version": "0.1.0",
+  "description": "MimForge'un bugunku davranisinin simulatoru — yerel sandbox",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --filter @mimmock/server dev",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "db:codegen": "pnpm --filter @mimmock/server db:codegen"
+  },
+  "packageManager": "pnpm@10.30.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}
