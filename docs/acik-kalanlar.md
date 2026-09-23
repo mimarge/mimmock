@@ -172,3 +172,14 @@ gönderip ister. README, `.env.example`, `llms-full.txt` ve açılış hata mesa
 söyler.
 
 Sözleşme ve canlı ölçüm: `docs/m2-olcum-kittest-sozlesmesi.md` §1.
+
+## 24. Lisans (M10)
+
+Depo public ama lisans dosyası yok. **Kullanıcıya soru:** hangi lisans? (MIT, Apache-2.0
+ya da "yalnız çalıştırma" gibi özel bir şart.) Karar gelene kadar depo "bütün hakları
+saklı"dır.
+
+## 25. CI'da canlı mimkit (M10)
+
+`fidelity` işi için `vars.MIMMOCK_MIMKIT_URL` + `secrets.MIMMOCK_MIMKIT_TOKEN` GitHub'a
+girilmedi. **Kullanıcıya soru:** CI için ayrı, kısıtlı bir mimkit anahtarı verilecek mi?

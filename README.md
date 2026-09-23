@@ -513,4 +513,4 @@ AGENTS.md          bu depoda çalışan kodlama ajanları için
 | M8 | Trafik üreteci: gerçek UBL · tohumlu · işaretli | ✅ ölçüldü — `docs/m8-olcum.md` |
 | M9 | Panel: durum tahtası · olay ekseni · ham istek günlüğü · terim katmanı | ✅ ölçüldü — `docs/m9-olcum.md` |
 | M9b | Belgeler: OpenAPI · `/docs` · LLM kılavuzu · kurulum yardımcısı · tek bağımlılık mimkit | ✅ ölçüldü — `docs/m9b-belgeler-ve-mimkit.md` |
-| M10 | Paketleme · public depo | — |
+| M10 | Paketleme · public depo · `ghcr.io/mimarge/mimmock` | ✅ ölçüldü — `docs/m10-olcum.md` |
